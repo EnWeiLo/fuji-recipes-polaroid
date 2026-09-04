@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#161311" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="富士食譜工具" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="icon" type="image/png" href="icon-192.png" />
+  <title>富士食譜工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sumi: #161311;
+      --sumi-2: #211c18;
+      --char: #2b2622;
+      --paper: #efe4d0;
+      --paper-2: #e4d5ba;
+      --ink: #2a2218;
+      --cream: #f6efe4;
+      --muted: #9b8f82;
+      --fuji: #e60012;
+      --fuji-d: #b4000e;
+      --line: rgba(255,255,255,.08);
+      --safe-t: env(safe-area-inset-top, 0px);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; background: var(--sumi); color: var(--cream); }
+    body {
+      font-family: "Noto Sans TC", "Noto Serif JP", sans-serif;
+      min-height: 100dvh;
+    }
+    body::before {
+      content: "";
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(1200px 500px at 20% -10%, rgba(230,0,18,.12), transparent 55%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E");
+    }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    img { max-width: 100%; display: block; }
+
+    .app { position: relative; z-index: 1; max-width: 740px; margin: 0 auto; padding-bottom: calc(96px + var(--safe-b)); }
+    header.top {
+      position: sticky; top: 0; z-index: 30;
+      padding: calc(12px + var(--safe-t)) 16px 12px;
+      background: color-mix(in srgb, var(--sumi) 82%, transparent);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .brand { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+    .mark {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--fuji); box-shadow: 0 0 0 3px #1a1612, 0 0 0 4px rgba(230,0,18,.45);
+      position: relative; flex: 0 0 auto;
+    }
+    .mark::after {
+      content: ""; position: absolute; inset: 9px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.35);
+    }
+    .brand h1 { margin: 0; font-family: "Noto Serif JP", serif; font-size: 18px; letter-spacing: .18em; font-weight: 700; }
+    .brand p { margin: 2px 0 0; color: var(--muted); font-size: 11px; letter-spacing: .12em; }
+    .icon-btn {
+      width: 42px; height: 42px; border: 1px solid var(--line);
+      background: var(--char); border-radius: 50%; color: var(--cream);
+      display: grid; place-items: center; font-size: 16px;
+      transition: transform .2s, background .2s;
+    }
+    .icon-btn:active { transform: scale(.94); }
+    a.icon-btn { text-decoration: none; color: var(--cream); }
+    .pbtn {
+      border: 0; min-height: 42px; padding: 0 14px; border-radius: 999px;
+      background: var(--paper); color: var(--ink); font-weight: 700; font-size: 13px;
+      box-shadow: 0 8px 18px rgba(0,0,0,.25);
+      transition: transform .18s, filter .18s;
+    }
+    .pbtn:active { transform: scale(.97); }
+    .pbtn.red { background: var(--fuji); color: #fff; }
+    .pbtn.ghost { background: transparent; color: var(--cream); border: 1px solid var(--line); box-shadow: none; }
+    .pbtn.full { width: 100%; }
+    a.pbtn { text-decoration: none; }
+    .pbtn:disabled { opacity: .4; }
+
+    .wrap { padding: 16px; }
+    .search {
+      width: 100%; border: 0; background: var(--char); color: var(--cream);
+      min-height: 46px; padding: 0 16px; border-radius: 999px; outline: none;
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    .toolbar { display: flex; gap: 8px; margin-top: 12px; }
+    .toolbar .pbtn { flex: 1; }
+
+    .grid { display: grid; gap: 14px; margin-top: 16px; }
+    .card {
+      text-align: left; border: 0; padding: 0; overflow: hidden;
+      background: var(--paper); color: var(--ink);
+      border-radius: 8px 18px 18px 8px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.28);
+      position: relative;
+      animation: rise .45s ease both;
+      background-image:
+        linear-gradient(180deg, rgba(255,255,255,.18), transparent 28%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+    }
+    .card::before {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+      background: var(--accent, var(--fuji));
+    }
+    .cover { height: min(58vw, 320px); background: #cbbba0; position: relative; }
+    .cover img { width: 100%; height: 100%; object-fit: cover; }
+    .stamp {
+      position: absolute; right: 12px; top: 12px; width: 46px; height: 46px;
+      border: 2px solid var(--fuji); color: var(--fuji); border-radius: 50%;
+      display: grid; place-items: center; font-family: "Noto Serif JP", serif;
+      font-size: 11px; letter-spacing: .2em; background: rgba(239,228,208,.72);
+      transform: rotate(12deg);
+    }
+    .tag {
+      position: absolute; left: 14px; bottom: 10px;
+      background: rgba(22,19,17,.82); color: #fff; font-size: 11px;
+      padding: 4px 8px; border-radius: 999px; letter-spacing: .04em;
+    }
+    .card-body { padding: 12px 14px 14px 16px; }
+    .card-body h3 { margin: 0 0 6px; font-family: "Noto Serif JP", serif; font-size: 18px; }
+    .meta { color: #6d6256; font-size: 12px; }
+    .meters { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 10px; }
+    .meter span { display: block; font-size: 10px; color: #7a6e62; letter-spacing: .08em; }
+    .bar { height: 5px; background: #d7c7ae; border-radius: 99px; overflow: hidden; margin-top: 3px; }
+    .bar i { display: block; height: 100%; background: var(--fuji); width: var(--w,50%); }
+
+    .empty { text-align: center; padding: 48px 12px; color: var(--muted); }
+    .empty h2 { color: var(--cream); font-family: "Noto Serif JP", serif; letter-spacing: .2em; }
+
+    .fab {
+      position: fixed; right: 18px; bottom: calc(18px + var(--safe-b));
+      z-index: 40; width: 62px; height: 62px; border-radius: 50%;
+      background: var(--fuji); color: #fff; border: 0;
+      box-shadow: 0 10px 24px rgba(230,0,18,.38);
+      font-size: 28px; font-weight: 700;
+    }
+    .screen { display: none; opacity: 0; transform: translateY(16px); }
+    .screen.show { display: block; animation: rise .38s ease forwards; }
+
+    .hero { height: min(72vw, 420px); background: #1a1612; position: relative; overflow: hidden; }
+    .hero img { width: 100%; height: 100%; object-fit: cover; animation: ken .9s ease; }
+    .hero .veil { position: absolute; inset: auto 0 0; height: 80px; background: linear-gradient(transparent, var(--sumi)); }
+    .kv { background: var(--paper); color: var(--ink); border-radius: 14px; overflow: hidden; }
+    .kv-row { display: flex; justify-content: space-between; gap: 12px; padding: 11px 14px; border-bottom: 1px solid #e0d2ba; font-size: 14px; }
+    .kv-row:last-child { border-bottom: 0; }
+    .kv-row span { color: #7a6e62; }
+    .notes { margin-top: 14px; background: var(--paper); color: var(--ink); border-radius: 14px; padding: 14px; white-space: pre-wrap; }
+    .photos { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
+    .photos img { width: 100%; aspect-ratio: 3/2; object-fit: cover; border-radius: 10px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .form { display: grid; gap: 12px; }
+    label.field { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+    .field input, .field select, .field textarea {
+      width: 100%; border: 0; background: var(--char); color: var(--cream);
+      border-radius: 12px; padding: 11px 12px; outline: none;
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    .field textarea { min-height: 92px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .thumb { position: relative; width: 84px; height: 84px; border-radius: 10px; overflow: hidden; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb button { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border: 0; border-radius: 50%; background: var(--fuji); color: #fff; }
+    .addph { width: 84px; height: 84px; border-radius: 10px; border: 1px dashed #6a5f55; background: var(--char); display: grid; place-items: center; color: var(--muted); font-size: 12px; }
+    .warn { background: #2a1714; color: #f3c8c4; padding: 12px 14px; border-radius: 14px; font-size: 12px; line-height: 1.6; }
+    .okbox { background: var(--char); padding: 12px 14px; border-radius: 14px; font-size: 13px; box-shadow: inset 0 0 0 1px var(--line); }
+    .log { margin-top: 12px; background: #0e0c0a; border-radius: 12px; padding: 10px; font-size: 11px; color: #d7c7ae; min-height: 80px; white-space: pre-wrap; font-family: ui-monospace, monospace; }
+    .toast {
+      position: fixed; left: 50%; bottom: calc(92px + var(--safe-b));
+      transform: translateX(-50%) translateY(8px);
+      background: var(--paper); color: var(--ink);
+      padding: 10px 14px; border-radius: 999px; font-size: 13px;
+      opacity: 0; pointer-events: none; z-index: 90; transition: .25s;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .hidden { display: none; }
+    .cam-dot { width: 8px; height: 8px; border-radius: 50%; background: #5a534c; display: inline-block; }
+    .cam-dot.on { background: #3dcc6f; box-shadow: 0 0 8px #3dcc6f; }
+    .shutter {
+      position: fixed; inset: 0; background: #fff; z-index: 100; pointer-events: none;
+      opacity: 0;
+    }
+    .shutter.go { animation: shutter .42s ease; }
+    @keyframes rise { from { opacity: 0; transform: translateY(16px);} to { opacity: 1; transform: none;} }
+    @keyframes ken { from { transform: scale(1.06);} to { transform: none;} }
+    @keyframes shutter { 0% {opacity:0} 18% {opacity:1} 100% {opacity:0} }
+  </style>
+</head>
+<body>
+  <div class="shutter" id="shutter"></div>
+  <div class="app">
+    <section id="list-screen" class="screen show">
+      <header class="top">
+        <div class="brand">
+          <div class="mark" aria-hidden="true"></div>
+          <div>
+            <h1>富士食譜工具</h1>
+          </div>
+        </div>
+        <a class="pbtn ghost" href="polaroid.html">拍立得</a>
+        <button class="icon-btn" id="btn-cam" title="相機">📷</button>
+      </header>
+      <div class="wrap">
+        <input class="search" id="q" placeholder="搜尋食譜名稱、軟片模擬…" />
+        <div class="toolbar">
+          <button class="pbtn ghost" id="btn-export">匯出設定</button>
+          <button class="pbtn ghost" id="btn-import">匯入設定</button>
+        </div>
+        <div class="grid" id="grid"></div>
+      </div>
+    </section>
+
+    <section id="detail-screen" class="screen">
+      <header class="top">
+        <button class="pbtn ghost" id="back-list">返回</button>
+        <div class="brand"><div><h1 id="d-title">食譜</h1><p id="d-sub"></p></div></div>
+        <button class="pbtn" id="btn-edit">編輯</button>
+      </header>
+      <div id="detail"></div>
+    </section>
+
+    <section id="edit-screen" class="screen">
+      <header class="top">
+        <button class="pbtn ghost" id="back-edit">返回</button>
+        <div class="brand"><div><h1 id="e-title">新食譜</h1><p>欄位可留空</p></div></div>
+      </header>
+      <div class="wrap"><form class="form" id="form"></form></div>
+    </section>
+
+    <section id="cam-screen" class="screen">
+      <header class="top">
+        <button class="pbtn ghost" id="back-cam">返回</button>
+        <div class="brand"><div><h1>連接相機</h1><p>Android Chrome · WebUSB</p></div></div>
+      </header>
+      <div class="wrap">
+        <div class="warn">
+          非官方連線，可能影響保固。請用資料線，相機設成「USB RAW CONV./BACKUP RESTORE」或 Tether。傳輸中勿拔線。
+        </div>
+        <div class="row">
+          <button class="pbtn" id="connect">連接相機 <span class="cam-dot" id="dot"></span></button>
+          <button class="pbtn ghost" id="disconnect" disabled>中斷</button>
+        </div>
+        <div id="cam-status" class="okbox" style="margin-top:12px">尚未連線</div>
+        <label class="field" style="margin-top:12px">選擇要寫入的食譜
+          <select id="cam-recipe"></select>
+        </label>
+        <label class="field">寫入槽位
+          <select id="cam-slot">
+            <option value="1">C1</option><option value="2">C2</option><option value="3">C3</option>
+            <option value="4">C4</option><option value="5">C5</option><option value="6">C6</option><option value="7">C7</option>
+          </select>
+        </label>
+        <div class="row">
+          <button class="pbtn ghost" id="read-slots" disabled>讀取 C 槽</button>
+          <button class="pbtn red" id="write-slot" disabled>寫入相機</button>
+        </div>
+        <div class="log" id="cam-log">等待連線…</div>
+      </div>
+    </section>
+  </div>
+  <button class="fab" id="fab" title="新增食譜">＋</button>
+  <div class="toast" id="toast"></div>
+  <input class="hidden" id="photo-file" type="file" accept="image/*" multiple />
+  <input class="hidden" id="import-file" type="file" accept="application/json,.json" />
+
+<script>
+const FILM = [
+  ["PROVIA / Standard", 0x01],["Velvia / Vivid", 0x02],["ASTIA / Soft", 0x03],
+  ["PRO Neg. Hi", 0x04],["PRO Neg. Std", 0x05],
+  ["Monochrome", 0x06],["Monochrome+Ye", 0x07],["Monochrome+R", 0x08],["Monochrome+G", 0x09],
+  ["Sepia", 0x0A],["Classic Chrome", 0x0B],
+  ["ACROS", 0x0C],["ACROS+Ye", 0x0D],["ACROS+R", 0x0E],["ACROS+G", 0x0F],
+  ["ETERNA / Cinema", 0x10],["Classic Neg.", 0x11],["ETERNA Bleach Bypass", 0x12],
+  ["Nostalgic Neg.", 0x13],["REALA ACE", 0x14]
+];
+const WB = [
+  ["自動", 0x0002],["自動（氣氛優先）", 0x8021],["晴天", 0x0004],
+  ["陰影", 0x8006],["螢光燈1", 0x8001],["螢光燈2", 0x8002],
+  ["螢光燈3", 0x8003],["白熾燈", 0x0006],["水中", 0x0008],
+  ["色溫", 0x8007]
+];
+const DRS = [["自動","AUTO"],["DR100",100],["DR200",200],["DR400",400]];
+const GRAIN = [["關",1],["弱／小",2],["強／小",3],["弱／大",4],["強／大",5]];
+const FX = [["關",1],["弱",2],["強",3]];
+const TONE = ["-2","-1.5","-1","-0.5","0","+0.5","+1","+1.5","+2","+2.5","+3","+3.5","+4"];
+const PM4 = ["-4","-3","-2","-1","0","+1","+2","+3","+4"];
+const CLA = ["-5","-4","-3","-2","-1","0","+1","+2","+3","+4","+5"];
+const MONO = new Set(["Monochrome","Monochrome+Ye","Monochrome+Y","Monochrome+R","Monochrome+G","Sepia","ACROS","ACROS+Ye","ACROS+Y","ACROS+R","ACROS+G"]);
+const FUJI_VID = 0x04CB;
+const LEGACY = {
+  "PROVIA / Standard":"PROVIA／標準","Velvia / Vivid":"Velvia／鮮豔","ASTIA / Soft":"ASTIA／柔和",
+  "PRO Neg. Hi":"PRO負片 高對比","PRO Neg. Std":"PRO負片 標準",
+  "Monochrome":"黑白","Monochrome+Y":"黑白＋黃","Monochrome+R":"黑白＋紅","Monochrome+G":"黑白＋綠",
+  "Sepia":"棕褐","Classic Chrome":"經典正片",
+  "ACROS+Y":"ACROS＋黃","ACROS+R":"ACROS＋紅","ACROS+G":"ACROS＋綠",
+  "ETERNA":"ETERNA／電影","Classic Neg.":"經典負片","ETERNA Bleach Bypass":"ETERNA漂白效果",
+  "Nostalgic Neg.":"懷舊負片","Reala Ace":"REALA ACE",
+  "Auto":"自動","Ambience Priority":"自動（氣氛優先）","Daylight":"晴天","Shade":"陰影",
+  "Fluorescent 1":"螢光燈1","Fluorescent 2":"螢光燈2","Fluorescent 3":"螢光燈3",
+  "Incandescent":"白熾燈","Underwater":"水中","Kelvin":"色溫",
+  "AUTO":"自動","Off":"關","Weak":"弱","Strong":"強",
+  "Weak Small":"弱／小","Strong Small":"強／小","Weak Large":"弱／大","Strong Large":"強／大"
+};
+function zh(v){ return LEGACY[v] || v; }
+
+const $ = (s) => document.querySelector(s);
+const state = { recipes: [], view: "list", current: null, draftPhotos: [], cam: null };
+const toast = (m) => { const t=$("#toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1800); };
+const shutter = () => { const s=$("#shutter"); if(!s) return; s.classList.remove("go"); void s.offsetWidth; s.classList.add("go"); };
+const SIM_COLOR = {
+  "PROVIA / Standard":"#c45c4a","Velvia / Vivid":"#d21e2b","ASTIA / Soft":"#d9a07a",
+  "Classic Chrome":"#b85a3a","Classic Neg.":"#8a5a3c","Nostalgic Neg.":"#6e4a38",
+  "ETERNA / Cinema":"#5a6a6e","ETERNA Bleach Bypass":"#7a7a7a","REALA ACE":"#c48a5a",
+  "PRO Neg. Hi":"#c07060","PRO Neg. Std":"#c9a090","ACROS":"#3a3a3a",
+  "ACROS+Ye":"#6a5a30","ACROS+R":"#5a3030","ACROS+G":"#30503a",
+  "Monochrome":"#444","Monochrome+Ye":"#6a5a30","Monochrome+R":"#5a3030",
+  "Monochrome+G":"#30503a","Sepia":"#8a6a40"
+};
+function tonePct(v){
+  const n = parseFloat(String(v).replace("+",""));
+  if(!Number.isFinite(n)) return 50;
+  return Math.max(4, Math.min(100, (n + 5) / 10 * 100));
+}
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc = (s) => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+
+const FILM_EN = {
+  "PROVIA／標準":"PROVIA / Standard","Velvia／鮮豔":"Velvia / Vivid","ASTIA／柔和":"ASTIA / Soft",
+  "PRO負片 高對比":"PRO Neg. Hi","PRO負片 標準":"PRO Neg. Std",
+  "黑白":"Monochrome","黑白＋黃":"Monochrome+Ye","黑白＋紅":"Monochrome+R","黑白＋綠":"Monochrome+G",
+  "棕褐":"Sepia","經典正片":"Classic Chrome",
+  "ACROS＋黃":"ACROS+Ye","ACROS＋紅":"ACROS+R","ACROS＋綠":"ACROS+G",
+  "ETERNA／電影":"ETERNA / Cinema","經典負片":"Classic Neg.","ETERNA漂白效果":"ETERNA Bleach Bypass",
+  "懷舊負片":"Nostalgic Neg.","Reala Ace":"REALA ACE","REALA ACE":"REALA ACE",
+  "Monochrome+Y":"Monochrome+Ye","ACROS+Y":"ACROS+Ye","ETERNA":"ETERNA / Cinema"
+};
+function migrateRecipe(r){
+  if(!r) return r;
+  if(r.filmSim) r.filmSim = FILM_EN[r.filmSim] || r.filmSim;
+  ["dr","grain","colorChrome","colorChromeBlue","wb"].forEach(k=>{ if(r[k]) r[k]=zh(r[k]); });
+  return r;
+}
+function emptyRecipe(){
+  return {
+    id: uid(), name: "", filmSim: "Classic Chrome", dr: "DR400",
+    grain: "弱／小", colorChrome: "關", colorChromeBlue: "關",
+    wb: "自動", kelvin: "5500", shiftR: "0", shiftB: "0",
+    highlight: "0", shadow: "0", color: "0", sharpness: "0", nr: "-4", clarity: "0",
+    iso: "Auto 至 6400", ev: "", notes: "", photos: [], createdAt: Date.now(), updatedAt: Date.now()
+  };
+}
+
+function save(){ localStorage.setItem("fujiPixel.v1", JSON.stringify(state.recipes)); }
+function load(){
+  try { state.recipes = JSON.parse(localStorage.getItem("fujiPixel.v1")||"[]"); } catch { state.recipes=[]; }
+  state.recipes.forEach(migrateRecipe);
+  if(!state.recipes.length){
+    state.recipes = [{
+      ...emptyRecipe(), id: "demo-gold", name: "Kodak Gold 200 範例",
+      grain: "強／小", colorChrome: "弱", shiftR: "+4", shiftB: "-5",
+      highlight: "-1.5", shadow: "+0.5", color: "+3", sharpness: "-2", clarity: "-2",
+      notes: "示範用，可刪。Classic Chrome + 暖色偏移。"
+    }];
+    save();
+  }
+}
+
+let dbp;
+function openDB(){
+  if(dbp) return dbp;
+  dbp = new Promise((res,rej)=>{
+    const r = indexedDB.open("fujiPixelPhotos",1);
+    r.onupgradeneeded = () => r.result.createObjectStore("p");
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+  return dbp;
+}
+async function putPhoto(id, blob){ const db=await openDB(); await new Promise((res,rej)=>{ const tx=db.transaction("p","readwrite"); tx.objectStore("p").put(blob,id); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+async function getPhotoURL(id){ const db=await openDB(); return new Promise((res,rej)=>{ const q=db.transaction("p").objectStore("p").get(id); q.onsuccess=()=>res(q.result?URL.createObjectURL(q.result):""); q.onerror=()=>rej(q.error); }); }
+async function delPhoto(id){ const db=await openDB(); await new Promise((res,rej)=>{ const tx=db.transaction("p","readwrite"); tx.objectStore("p").delete(id); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+
+function show(name){
+  state.view = name;
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("show"));
+  const el = $(`#${name}-screen`);
+  el.classList.add("show");
+  $("#fab").style.display = name==="list" ? "block" : "none";
+}
+
+async function renderList(){
+  const q = ($("#q").value||"").toLowerCase();
+  const list = state.recipes.filter(r => `${r.name} ${r.filmSim} ${r.notes}`.toLowerCase().includes(q))
+    .sort((a,b)=>b.updatedAt-a.updatedAt);
+  if(!list.length){
+    $("#grid").innerHTML = `<div class="empty"><h2>尚無食譜</h2><p>按右下紅點新增一道。</p></div>`;
+    return;
+  }
+  const html = await Promise.all(list.map(async (r,i)=>{
+    const cover = r.photos[0] ? await getPhotoURL(r.photos[0]) : "";
+    const accent = SIM_COLOR[r.filmSim] || "#e60012";
+    return `<button class="card" data-id="${r.id}" style="--accent:${accent};animation-delay:${i*60}ms">
+      <div class="cover">${cover?`<img src="${cover}" alt="">`:""}<div class="tag">${esc(r.filmSim)}</div></div>
+      <div class="card-body"><h3>${esc(r.name||"未命名")}</h3>
+      <div class="meta">${esc(r.wb)} · ${esc(r.grain)} · ${esc(r.dr)}</div>
+      <div class="meters">
+        <div class="meter"><span>高光 ${esc(r.highlight)}</span><div class="bar"><i style="--w:${tonePct(r.highlight)}%"></i></div></div>
+        <div class="meter"><span>陰影 ${esc(r.shadow)}</span><div class="bar"><i style="--w:${tonePct(r.shadow)}%"></i></div></div>
+        <div class="meter"><span>色彩 ${esc(r.color)}</span><div class="bar"><i style="--w:${tonePct(r.color)}%"></i></div></div>
+      </div></div></button>`;
+  }));
+  $("#grid").innerHTML = html.join("");
+}
+
+async function renderDetail(id){
+  const r = state.recipes.find(x=>x.id===id); if(!r) return show("list");
+  state.current = id;
+  $("#d-title").textContent = "食譜";
+  $("#d-sub").textContent = r.name;
+  const urls = await Promise.all((r.photos||[]).map(getPhotoURL));
+  const rows = [
+    ["軟片模擬", r.filmSim],["動態範圍", r.dr],["顆粒效果", r.grain],
+    ["彩色正片效果", r.colorChrome],["彩色正片FX藍", r.colorChromeBlue],
+    ["白平衡", r.wb==="色溫"?`色溫 ${r.kelvin}K`:r.wb],
+    ["白平衡偏移", `R ${r.shiftR}　B ${r.shiftB}`],
+    ["高光色調", r.highlight],["陰影色調", r.shadow],["色彩", r.color],
+    ["銳利度", r.sharpness],["高感光度降噪", r.nr],["清晰度", r.clarity],
+    ["ISO", r.iso||"—"],["曝光補償", r.ev||"—"]
+  ].map(([k,v])=>`<div class="kv-row"><span>${k}</span><b>${esc(v)}</b></div>`).join("");
+  $("#detail").innerHTML = `
+    <div class="hero">${urls[0]?`<img src="${urls[0]}" alt="">`:""}</div>
+    <div class="wrap">
+      <h2 style="margin:0 0 8px;font-family:'Noto Serif JP',serif">${esc(r.name)}</h2>
+      <div class="meters" style="margin:0 0 14px">
+        <div class="meter"><span>高光 ${esc(r.highlight)}</span><div class="bar"><i style="--w:${tonePct(r.highlight)}%"></i></div></div>
+        <div class="meter"><span>陰影 ${esc(r.shadow)}</span><div class="bar"><i style="--w:${tonePct(r.shadow)}%"></i></div></div>
+        <div class="meter"><span>色彩 ${esc(r.color)}</span><div class="bar"><i style="--w:${tonePct(r.color)}%"></i></div></div>
+      </div>
+      <div class="kv">${rows}</div>
+      ${r.notes?`<div class="notes">${esc(r.notes)}</div>`:""}
+      ${urls.length?`<div class="photos">${urls.map(u=>`<img src="${u}">`).join("")}</div>`:""}
+      <div class="row">
+        <button class="pbtn cyan" id="send-this">寫入相機</button>
+        <button class="pbtn red" id="del-this">刪除</button>
+      </div>
+    </div>`;
+  show("detail");
+}
+
+function sel(name, pairs, cur){
+  const opts = Array.isArray(pairs[0]) ? pairs : pairs.map(v=>[v,v]);
+  return `<select name="${name}">${opts.map(([l])=>`<option ${String(l)===String(cur)?"selected":""}>${l}</option>`).join("")}</select>`;
+}
+
+function renderForm(r, isNew){
+  state.current = r.id;
+  state.draftPhotos = [...(r.photos||[])];
+  $("#e-title").textContent = isNew ? "新食譜" : "編輯食譜";
+  $("#form").innerHTML = `
+    <label class="field">食譜名稱<input name="name" value="${esc(r.name)}" required placeholder="例如 Pacific Blues"></label>
+    <label class="field">軟片模擬${sel("filmSim", FILM, r.filmSim)}</label>
+    <div class="row2">
+      <label class="field">動態範圍${sel("dr", DRS, r.dr)}</label>
+      <label class="field">顆粒效果${sel("grain", GRAIN, r.grain)}</label>
+    </div>
+    <div class="row2">
+      <label class="field">彩色正片效果${sel("colorChrome", FX, r.colorChrome)}</label>
+      <label class="field">彩色正片FX藍${sel("colorChromeBlue", FX, r.colorChromeBlue)}</label>
+    </div>
+    <div class="row2">
+      <label class="field">白平衡${sel("wb", WB, r.wb)}</label>
+      <label class="field">色溫 K<input name="kelvin" value="${esc(r.kelvin||"")}" inputmode="numeric"></label>
+    </div>
+    <div class="row2">
+      <label class="field">白平衡偏移 R<input name="shiftR" value="${esc(r.shiftR)}"></label>
+      <label class="field">白平衡偏移 B<input name="shiftB" value="${esc(r.shiftB)}"></label>
+    </div>
+    <div class="row3">
+      <label class="field">高光色調${sel("highlight", TONE, r.highlight)}</label>
+      <label class="field">陰影色調${sel("shadow", TONE, r.shadow)}</label>
+      <label class="field">色彩${sel("color", PM4, r.color)}</label>
+    </div>
+    <div class="row3">
+      <label class="field">銳利度${sel("sharpness", PM4, r.sharpness)}</label>
+      <label class="field">高感光度降噪${sel("nr", PM4, r.nr)}</label>
+      <label class="field">清晰度${sel("clarity", CLA, r.clarity)}</label>
+    </div>
+    <label class="field">ISO 備註<input name="iso" value="${esc(r.iso||"")}"></label>
+    <label class="field">曝光補償備註<input name="ev" value="${esc(r.ev||"")}"></label>
+    <label class="field">敘述<textarea name="notes">${esc(r.notes||"")}</textarea></label>
+    <div><div style="color:var(--dim);font-size:12px;margin-bottom:6px">範本照片（會壓縮）</div><div class="thumbs" id="thumbs"></div></div>
+    <button class="pbtn full" type="submit">儲存</button>`;
+  renderThumbs();
+  show("edit");
+}
+
+async function renderThumbs(){
+  const box = $("#thumbs"); if(!box) return;
+  const urls = await Promise.all(state.draftPhotos.map(getPhotoURL));
+  box.innerHTML = state.draftPhotos.map((id,i)=>`<div class="thumb"><img src="${urls[i]}"><button type="button" data-del="${id}">×</button></div>`).join("")
+    + `<button type="button" class="addph" id="addph">＋照片</button>`;
+}
+
+function readForm(){
+  const fd = new FormData($("#form"));
+  const g = k => String(fd.get(k)||"").trim();
+  return { name:g("name"), filmSim:g("filmSim"), dr:g("dr"), grain:g("grain"),
+    colorChrome:g("colorChrome"), colorChromeBlue:g("colorChromeBlue"),
+    wb:g("wb"), kelvin:g("kelvin"), shiftR:g("shiftR")||"0", shiftB:g("shiftB")||"0",
+    highlight:g("highlight"), shadow:g("shadow"), color:g("color"),
+    sharpness:g("sharpness"), nr:g("nr"), clarity:g("clarity"), iso:g("iso"), ev:g("ev"), notes:g("notes") };
+}
+
+function compressImage(file, max=1200, q=0.72){
+  return new Promise((resolve,reject)=>{
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const s = Math.min(1, max/Math.max(img.width,img.height));
+      const c = document.createElement("canvas"); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      c.toBlob(b => { URL.revokeObjectURL(url); b?resolve(b):reject(); }, "image/jpeg", q);
+    };
+    img.onerror = reject; img.src = url;
+  });
+}
+
+/* ===== PTP / WebUSB ===== */
+const OP = { GetDeviceInfo:0x1001, OpenSession:0x1002, CloseSession:0x1003, GetProp:0x1015, SetProp:0x1016 };
+const OK = 0x2001;
+function u16(n){ const b=new Uint8Array(2); new DataView(b.buffer).setUint16(0,n&0xffff,true); return b; }
+function i16(n){ const b=new Uint8Array(2); new DataView(b.buffer).setInt16(0,n,true); return b; }
+function ptpStr(s){
+  const chars = Array.from(s); const n = chars.length+1;
+  const buf = new Uint8Array(1+n*2); buf[0]=n;
+  const v = new DataView(buf.buffer);
+  chars.forEach((ch,i)=>v.setUint16(1+i*2, ch.codePointAt(0), true));
+  return buf;
+}
+function copyUsb(dv){
+  if(!dv || !dv.byteLength) return new Uint8Array(0);
+  return new Uint8Array(dv.buffer.slice(dv.byteOffset, dv.byteOffset + dv.byteLength));
+}
+function parsePtpStr(data){
+  if(!data || data.length < 1) return "";
+  const n = data[0];
+  const v = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  let out = "";
+  for(let i=0;i<Math.max(0,n-1);i++){
+    const off = 1 + i*2;
+    if(off + 1 >= data.length) break;
+    const c = v.getUint16(off,true);
+    if(!c) break;
+    out += String.fromCodePoint(c);
+  }
+  return out;
+}
+function concat(a,b){ const o=new Uint8Array(a.length+b.length); o.set(a,0); o.set(b,a.length); return o; }
+
+class PtpCam {
+  constructor(device){ this.device=device; this.tid=0; this.epIn=null; this.epOut=null; }
+  async open(){
+    await this.device.open();
+    if(this.device.configuration==null) await this.device.selectConfiguration(1);
+    const ifaces = this.device.configuration.interfaces;
+    let iface = 0, alt = ifaces[0].alternates[0];
+    for(const inf of ifaces){
+      for(const a of inf.alternates){
+        const bulk = a.endpoints.filter(e=>e.type==="bulk");
+        if(bulk.some(e=>e.direction==="in") && bulk.some(e=>e.direction==="out")){
+          iface = inf.interfaceNumber; alt = a;
+        }
+      }
+    }
+    await this.device.claimInterface(iface);
+    try { if(alt.alternateSetting) await this.device.selectAlternateInterface(iface, alt.alternateSetting); } catch {}
+    this.iface = iface;
+    const claimed = this.device.configuration.interfaces.find(i=>i.interfaceNumber===iface);
+    const eps = (claimed.alternates.find(a=>a.alternateSetting===alt.alternateSetting) || claimed.alternates[0] || alt).endpoints;
+    this.epIn = eps.find(e=>e.type==="bulk"&&e.direction==="in").endpointNumber;
+    this.epOut = eps.find(e=>e.type==="bulk"&&e.direction==="out").endpointNumber;
+    this.pkt = Math.max(64, (eps.find(e=>e.type==="bulk"&&e.direction==="in").packetSize) || 512);
+  }
+  async close(){
+    try { await this.cmd(OP.CloseSession); } catch {}
+    try { await this.device.releaseInterface(this.iface); } catch {}
+    try { await this.device.close(); } catch {}
+  }
+  pack(type, code, tid, params=[], payload=new Uint8Array()){
+    const len = 12 + params.length*4 + payload.length;
+    const buf = new Uint8Array(len);
+    const v = new DataView(buf.buffer);
+    v.setUint32(0,len,true); v.setUint16(4,type,true); v.setUint16(6,code,true); v.setUint32(8,tid,true);
+    params.forEach((p,i)=>v.setUint32(12+i*4,p>>>0,true));
+    if(payload.length) buf.set(payload, 12+params.length*4);
+    return buf;
+  }
+  async transferOut(bytes){
+    const chunk = 512;
+    for(let i=0;i<bytes.length;i+=chunk){
+      await this.device.transferOut(this.epOut, bytes.slice(i, i+chunk));
+    }
+  }
+  async readSome(){
+    const res = await this.device.transferIn(this.epIn, this.pkt || 512);
+    if(res.status === "stall"){
+      try { await this.device.clearHalt("in", this.epIn); } catch {}
+      return new Uint8Array(0);
+    }
+    return copyUsb(res.data);
+  }
+  async readContainer(){
+    let acc = new Uint8Array(0);
+    const t0 = Date.now();
+    while(acc.length < 12){
+      if(Date.now()-t0 > 8000) throw new Error("讀取 PTP 標頭逾時");
+      acc = concat(acc, await this.readSome());
+    }
+    const total = new DataView(acc.buffer).getUint32(0,true);
+    if(total < 12 || total > 1024*1024) throw new Error("PTP 長度異常 "+total);
+    while(acc.length < total){
+      if(Date.now()-t0 > 12000) throw new Error("讀取 PTP 資料逾時");
+      acc = concat(acc, await this.readSome());
+    }
+    const v = new DataView(acc.buffer, 0, acc.byteLength);
+    return {
+      length: total,
+      type: v.getUint16(4,true),
+      code: v.getUint16(6,true),
+      tid: v.getUint32(8,true),
+      payload: acc.slice(12, total)
+    };
+  }
+  async cmd(opcode, params=[], dataOut=null){
+    const tid = ++this.tid;
+    await this.transferOut(this.pack(1, opcode, tid, params));
+    if(dataOut) await this.transferOut(this.pack(2, opcode, tid, [], dataOut));
+    let data = new Uint8Array(0), code = 0;
+    for(let i=0;i<8;i++){
+      const pkt = await this.readContainer();
+      if(pkt.type===2) data = pkt.payload;
+      if(pkt.type===3){ code = pkt.code; break; }
+    }
+    return { code, data };
+  }
+  async getDeviceInfo(){
+    const fallback = {
+      manufacturer: this.device.manufacturerName || "FUJIFILM",
+      model: this.device.productName || "Fujifilm",
+      version: "",
+      serial: this.device.serialNumber || ""
+    };
+    try{
+      const {code,data} = await this.cmd(OP.GetDeviceInfo);
+      if(code!==OK || !data.length) return fallback;
+      const r = new Reader(data);
+      r.u16(); r.u32(); r.u16(); r.str(); r.u16();
+      r.u16arr(); r.u16arr(); r.u16arr(); r.u16arr(); r.u16arr();
+      const manufacturer=r.str()||fallback.manufacturer;
+      const model=r.str()||fallback.model;
+      const version=r.str()||fallback.version;
+      const serial=r.str()||fallback.serial;
+      return { manufacturer, model, version, serial };
+    }catch{
+      return fallback;
+    }
+  }
+  async getProp(id){
+    const {code,data} = await this.cmd(OP.GetProp, [id]);
+    if(code!==OK) return null;
+    return data;
+  }
+  async setU16(id, val){ return (await this.cmd(OP.SetProp,[id], u16(val))).code===OK; }
+  async setI16(id, val){ return (await this.cmd(OP.SetProp,[id], i16(val))).code===OK; }
+  async setStr(id, val){ return (await this.cmd(OP.SetProp,[id], ptpStr(val))).code===OK; }
+}
+
+class Reader {
+  constructor(u8){
+    this.u8 = u8 instanceof Uint8Array ? new Uint8Array(u8) : new Uint8Array(u8 || []);
+    this.v = new DataView(this.u8.buffer);
+    this.o = 0;
+  }
+  left(){ return this.u8.length - this.o; }
+  u16(){
+    if(this.left() < 2) return 0;
+    const x = this.v.getUint16(this.o,true); this.o += 2; return x;
+  }
+  u32(){
+    if(this.left() < 4) return 0;
+    const x = this.v.getUint32(this.o,true); this.o += 4; return x;
+  }
+  str(){
+    if(this.left() < 1) return "";
+    const n = this.u8[this.o]; this.o += 1;
+    let s = "";
+    for(let i=0;i<n;i++){
+      if(this.left() < 2) break;
+      const c = this.v.getUint16(this.o,true); this.o += 2;
+      if(c) s += String.fromCodePoint(c);
+    }
+    return s;
+  }
+  u16arr(){
+    const n = this.u16();
+    const a = [];
+    for(let i=0;i<n && this.left()>=2;i++) a.push(this.u16());
+    return a;
+  }
+}
+
+function pairVal(table, label){ const hit=table.find(x=>x[0]===label); return hit?hit[1]:null; }
+function tone10(s){ const n=parseFloat(String(s).replace("+","")); return Math.round((Number.isFinite(n)?n:0)*10); }
+function shiftNum(s){ const n=parseInt(String(s).replace("+",""),10); return Number.isFinite(n)?n:0; }
+const NR_ENC = {[-4]:0x8000,[-3]:0x7000,[-2]:0x4000,[-1]:0x3000,[0]:0x2000,[1]:0x1000,[2]:0x0000,[3]:0x6000,[4]:0x5000};
+
+function logCam(s){ const el=$("#cam-log"); el.textContent += "\n"+s; el.scrollTop = el.scrollHeight; }
+
+async function connectCam(){
+  if(!navigator.usb){ toast("這支瀏覽器沒有 WebUSB，請用 Android Chrome"); return; }
+  try{
+    const device = await navigator.usb.requestDevice({ filters: [{ vendorId: FUJI_VID }] });
+    const cam = new PtpCam(device);
+    logCam("裝置：" + (device.productName || device.manufacturerName || "Fujifilm"));
+    logCam("開啟 USB…");
+    await cam.open();
+    logCam("介面已占用，開始 PTP…");
+    const sess = await cam.cmd(OP.OpenSession, [1]);
+    if(sess.code !== OK && sess.code !== 0x201E){
+      logCam("OpenSession 回應 " + sess.code.toString(16) + "，仍嘗試繼續");
+    }
+    const info = await cam.getDeviceInfo();
+    logCam("型號：" + info.model + (info.version ? ("  FW " + info.version) : ""));
+    state.cam = cam;
+    $("#dot").classList.add("on");
+    $("#cam-status").textContent = "已連線：" + info.model;
+    $("#disconnect").disabled = $("#read-slots").disabled = $("#write-slot").disabled = false;
+    logCam("連線完成。");
+    toast("相機已連線");
+  }catch(err){
+    logCam("失敗：" + (err.message||err));
+    toast("連線失敗");
+  }
+}
+
+async function disconnectCam(){
+  if(state.cam){ await state.cam.close(); state.cam=null; }
+  $("#dot").classList.remove("on");
+  $("#cam-status").textContent = "尚未連線";
+  $("#disconnect").disabled = $("#read-slots").disabled = $("#write-slot").disabled = true;
+  logCam("已中斷。");
+}
+
+async function readSlots(){
+  if(!state.cam) return;
+  logCam("讀取 C1–C7…");
+  for(let slot=1; slot<=7; slot++){
+    const ok = await state.cam.setU16(0xD18C, slot);
+    if(!ok){ logCam("C"+slot+" 無法切換"); continue; }
+    await new Promise(r=>setTimeout(r,80));
+    const nameB = await state.cam.getProp(0xD18D);
+    const fsB = await state.cam.getProp(0xD192);
+    const name = nameB ? parsePtpStr(nameB) : "(無)";
+    let fs = "?";
+    if(fsB && fsB.length>=2){
+      const v = new DataView(fsB.buffer, fsB.byteOffset, fsB.byteLength).getInt16(0,true);
+      const hit = FILM.find(x=>x[1]===v); fs = hit?hit[0]:("0x"+v.toString(16));
+    }
+    logCam(`C${slot}  ${name}  /  ${fs}`);
+  }
+}
+
+async function writeRecipeToSlot(recipe, slot){
+  const cam = state.cam;
+  if(!cam) throw new Error("未連線");
+  const name = (recipe.name||"RECIPE").slice(0,24);
+  logCam("切到 C"+slot+" …");
+  if(!await cam.setU16(0xD18C, slot)) throw new Error("無法選擇槽位");
+  await new Promise(r=>setTimeout(r,120));
+  logCam("寫入名稱…");
+  if(!await cam.setStr(0xD18D, name)) logCam("名稱寫入被拒（可忽略）");
+
+  const jobs = [];
+  const fs = pairVal(FILM, recipe.filmSim);
+  if(fs!=null) jobs.push(["FilmSim", 0xD192, ()=>cam.setU16(0xD192, fs)]);
+  if(recipe.dr!=="自動" && recipe.dr!=="AUTO"){
+    const dr = pairVal(DRS, recipe.dr);
+    if(dr!=null) jobs.push(["DR", 0xD190, ()=>cam.setU16(0xD190, dr)]);
+  }
+  const gr = pairVal(GRAIN, recipe.grain);
+  if(gr!=null) jobs.push(["Grain", 0xD195, ()=>cam.setU16(0xD195, gr)]);
+  const cc = pairVal(FX, recipe.colorChrome);
+  if(cc!=null) jobs.push(["Chrome", 0xD196, ()=>cam.setU16(0xD196, cc)]);
+  const cb = pairVal(FX, recipe.colorChromeBlue);
+  if(cb!=null) jobs.push(["FX Blue", 0xD197, ()=>cam.setU16(0xD197, cb)]);
+  const wb = pairVal(WB, recipe.wb);
+  if(wb!=null) jobs.push(["WB", 0xD199, ()=>cam.setU16(0xD199, wb)]);
+  jobs.push(["ShiftR", 0xD19A, ()=>cam.setI16(0xD19A, shiftNum(recipe.shiftR))]);
+  jobs.push(["ShiftB", 0xD19B, ()=>cam.setI16(0xD19B, shiftNum(recipe.shiftB))]);
+  if(recipe.wb==="色溫" || recipe.wb==="Kelvin" && recipe.kelvin){
+    jobs.push(["Kelvin", 0xD19C, ()=>cam.setU16(0xD19C, parseInt(recipe.kelvin,10)||5500)]);
+  }
+  jobs.push(["Highlight", 0xD19D, ()=>cam.setI16(0xD19D, tone10(recipe.highlight))]);
+  jobs.push(["Shadow", 0xD19E, ()=>cam.setI16(0xD19E, tone10(recipe.shadow))]);
+  if(!MONO.has(recipe.filmSim)){
+    jobs.push(["Color", 0xD19F, ()=>cam.setI16(0xD19F, tone10(recipe.color))]);
+  }
+  jobs.push(["Sharp", 0xD1A0, ()=>cam.setI16(0xD1A0, tone10(recipe.sharpness))]);
+  const nr = parseInt(recipe.nr,10);
+  if(NR_ENC[nr]!=null) jobs.push(["NR", 0xD1A1, ()=>cam.setU16(0xD1A1, NR_ENC[nr])]);
+  jobs.push(["Clarity", 0xD1A2, ()=>cam.setI16(0xD1A2, tone10(recipe.clarity))]);
+
+  let ok=0, fail=0;
+  for(const [label, , fn] of jobs){
+    const done = await fn();
+    logCam((done?"OK ":"NG ") + label);
+    if(done) ok++; else fail++;
+    await new Promise(r=>setTimeout(r,40));
+  }
+  logCam(`完成：成功 ${ok} / 失敗 ${fail}`);
+  if(fail && !ok) throw new Error("全部寫入失敗，檢查連線模式");
+}
+
+function fillRecipeSelect(){
+  $("#cam-recipe").innerHTML = state.recipes.map(r=>`<option value="${r.id}">${esc(r.name||"未命名")}</option>`).join("");
+}
+
+/* events */
+$("#q").addEventListener("input", renderList);
+$("#grid").addEventListener("click", e=>{ const c=e.target.closest("[data-id]"); if(c) renderDetail(c.dataset.id); });
+$("#back-list").onclick = ()=>{ show("list"); renderList(); };
+$("#back-edit").onclick = ()=> state.current && state.recipes.some(r=>r.id===state.current) ? renderDetail(state.current) : (show("list"), renderList());
+$("#back-cam").onclick = ()=>{ show("list"); renderList(); };
+$("#fab").onclick = ()=>renderForm(emptyRecipe(), true);
+$("#btn-edit").onclick = ()=>{ const r=state.recipes.find(x=>x.id===state.current); if(r) renderForm({...r}, false); };
+$("#btn-cam").onclick = ()=>{ fillRecipeSelect(); show("cam"); };
+$("#connect").onclick = connectCam;
+$("#disconnect").onclick = disconnectCam;
+$("#read-slots").onclick = ()=>readSlots().catch(e=>logCam(e.message));
+$("#write-slot").onclick = async ()=>{
+  const r = state.recipes.find(x=>x.id===$("#cam-recipe").value);
+  if(!r) return toast("先選食譜");
+  if(!confirm(`將「${r.name}」寫入 C${$("#cam-slot").value}？會覆蓋該槽。`)) return;
+  try { await writeRecipeToSlot(r, Number($("#cam-slot").value)); shutter(); toast("寫入完成"); }
+  catch(e){ logCam("寫入錯誤："+e.message); toast("寫入失敗"); }
+};
+$("#form").addEventListener("submit", e=>{
+  e.preventDefault();
+  const data = readForm();
+  if(!data.name) return toast("先取名字");
+  const exist = state.recipes.find(r=>r.id===state.current);
+  if(exist) Object.assign(exist, data, {photos:[...state.draftPhotos], updatedAt:Date.now()});
+  else state.recipes.unshift({...emptyRecipe(), id:state.current, ...data, photos:[...state.draftPhotos]});
+  save(); shutter(); toast("已存檔"); renderDetail(state.current);
+});
+$("#form").addEventListener("click", async e=>{
+  if(e.target.id==="addph") $("#photo-file").click();
+  if(e.target.dataset.del){
+    state.draftPhotos = state.draftPhotos.filter(id=>id!==e.target.dataset.del);
+    await delPhoto(e.target.dataset.del); renderThumbs();
+  }
+});
+$("#photo-file").addEventListener("change", async e=>{
+  const files=[...e.target.files]; e.target.value="";
+  for(const f of files.slice(0,6)){
+    try{ const blob=await compressImage(f); const id="p_"+uid(); await putPhoto(id,blob); state.draftPhotos.push(id); }
+    catch{ toast("照片失敗"); }
+  }
+  renderThumbs();
+});
+$("#detail").addEventListener("click", async e=>{
+  if(e.target.id==="send-this"){
+    fillRecipeSelect(); $("#cam-recipe").value = state.current; show("cam");
+  }
+  if(e.target.id==="del-this"){
+    if(!confirm("刪除這道食譜？")) return;
+    const r=state.recipes.find(x=>x.id===state.current);
+    if(r) for(const id of r.photos) await delPhoto(id);
+    state.recipes = state.recipes.filter(x=>x.id!==state.current);
+    save(); toast("已刪除"); show("list"); renderList();
+  }
+});
+
+function exportSettings(){
+  const blob = new Blob([JSON.stringify({
+    app: "富士食譜工具", version: 1, exportedAt: new Date().toISOString(),
+    recipes: state.recipes.map(r => ({...r, photos: []}))
+  }, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `fuji-recipes-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast("已匯出設定（不含照片）");
+}
+async function importSettings(file){
+  try{
+    const data = JSON.parse(await file.text());
+    const incoming = data.recipes || data;
+    if(!Array.isArray(incoming)) throw new Error("format");
+    let n = 0;
+    incoming.forEach(r=>{
+      migrateRecipe(r); if(!r || !r.name) return;
+      if(!r.id) r.id = uid();
+      r.photos = [];
+      r.updatedAt = Date.now();
+      const i = state.recipes.findIndex(x=>x.id===r.id || x.name===r.name);
+      if(i>=0) state.recipes[i] = {...state.recipes[i], ...r, photos: state.recipes[i].photos||[]};
+      else state.recipes.unshift(r);
+      n++;
+    });
+    save(); shutter(); toast(`已匯入 ${n} 道食譜`);
+    renderList();
+  }catch{ toast("匯入失敗，請確認 JSON"); }
+}
+$("#btn-export").onclick = exportSettings;
+$("#btn-import").onclick = () => $("#import-file").click();
+$("#import-file").addEventListener("change", e=>{
+  const f = e.target.files[0]; e.target.value=""; if(f) importSettings(f);
+});
+
+load(); renderList();
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
