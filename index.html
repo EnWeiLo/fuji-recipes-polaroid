@@ -256,14 +256,15 @@
         <label class="field" style="margin-top:12px">選擇要寫入的食譜
           <select id="cam-recipe"></select>
         </label>
-        <label class="field">寫入槽位
+        <label class="field">選擇 C 槽（讀取／寫入都用這個）
           <select id="cam-slot">
             <option value="1">C1</option><option value="2">C2</option><option value="3">C3</option>
             <option value="4">C4</option><option value="5">C5</option><option value="6">C6</option><option value="7">C7</option>
           </select>
         </label>
         <div class="row">
-          <button class="pbtn ghost" id="read-slots" disabled>讀取 C 槽</button>
+          <button class="pbtn ghost" id="read-slots" disabled>列出全部 C 槽</button>
+          <button class="pbtn" id="read-save" disabled>讀取並存成食譜</button>
           <button class="pbtn red" id="write-slot" disabled>寫入相機</button>
         </div>
         <div class="log" id="cam-log">等待連線…</div>
@@ -452,6 +453,7 @@ async function renderDetail(id){
       ${r.notes?`<div class="notes">${esc(r.notes)}</div>`:""}
       ${urls.length?`<div class="photos">${urls.map(u=>`<img src="${u}">`).join("")}</div>`:""}
       <div class="row">
+        <button class="pbtn" id="share-this">分享圖</button>
         <button class="pbtn cyan" id="send-this">寫入相機</button>
         <button class="pbtn red" id="del-this">刪除</button>
       </div>
@@ -681,6 +683,16 @@ class PtpCam {
     if(code!==OK) return null;
     return data;
   }
+  async getU16(id){
+    const d = await this.getProp(id);
+    if(!d || d.length<2) return null;
+    return new DataView(d.buffer, d.byteOffset, d.byteLength).getUint16(0,true);
+  }
+  async getI16(id){
+    const d = await this.getProp(id);
+    if(!d || d.length<2) return null;
+    return new DataView(d.buffer, d.byteOffset, d.byteLength).getInt16(0,true);
+  }
   async setU16(id, val){ return (await this.cmd(OP.SetProp,[id], u16(val))).code===OK; }
   async setI16(id, val){ return (await this.cmd(OP.SetProp,[id], i16(val))).code===OK; }
   async setStr(id, val){ return (await this.cmd(OP.SetProp,[id], ptpStr(val))).code===OK; }
@@ -721,6 +733,15 @@ class Reader {
 }
 
 function pairVal(table, label){ const hit=table.find(x=>x[0]===label); return hit?hit[1]:null; }
+function pairLabel(table, val){ const hit=table.find(x=>x[1]===val); return hit?hit[0]:null; }
+function fmtTone(n){
+  if(n==null || !Number.isFinite(n)) return "0";
+  const v = Math.round(n)/10;
+  if(Object.is(v,-0) || v===0) return "0";
+  const s = Number.isInteger(v) ? String(v) : String(v);
+  return (v>0?"+":"")+s;
+}
+const NR_DEC = {0x8000:-4,0x7000:-3,0x4000:-2,0x3000:-1,0x2000:0,0x1000:1,0x0000:2,0x6000:3,0x5000:4};
 function tone10(s){ const n=parseFloat(String(s).replace("+","")); return Math.round((Number.isFinite(n)?n:0)*10); }
 function shiftNum(s){ const n=parseInt(String(s).replace("+",""),10); return Number.isFinite(n)?n:0; }
 const NR_ENC = {[-4]:0x8000,[-3]:0x7000,[-2]:0x4000,[-1]:0x3000,[0]:0x2000,[1]:0x1000,[2]:0x0000,[3]:0x6000,[4]:0x5000};
@@ -745,7 +766,7 @@ async function connectCam(){
     state.cam = cam;
     $("#dot").classList.add("on");
     $("#cam-status").textContent = "已連線：" + info.model;
-    $("#disconnect").disabled = $("#read-slots").disabled = $("#write-slot").disabled = false;
+    $("#disconnect").disabled = $("#read-slots").disabled = $("#read-save").disabled = $("#write-slot").disabled = false;
     logCam("連線完成。");
     toast("相機已連線");
   }catch(err){
@@ -758,7 +779,7 @@ async function disconnectCam(){
   if(state.cam){ await state.cam.close(); state.cam=null; }
   $("#dot").classList.remove("on");
   $("#cam-status").textContent = "尚未連線";
-  $("#disconnect").disabled = $("#read-slots").disabled = $("#write-slot").disabled = true;
+  $("#disconnect").disabled = $("#read-slots").disabled = $("#read-save").disabled = $("#write-slot").disabled = true;
   logCam("已中斷。");
 }
 
@@ -779,6 +800,53 @@ async function readSlots(){
     }
     logCam(`C${slot}  ${name}  /  ${fs}`);
   }
+}
+
+async function readSlotAsRecipe(slot){
+  const cam = state.cam;
+  if(!cam) throw new Error("未連線");
+  logCam("切到 C"+slot+" 並讀取…");
+  if(!await cam.setU16(0xD18C, slot)) throw new Error("無法選擇槽位");
+  await new Promise(r=>setTimeout(r,150));
+  const nameB = await cam.getProp(0xD18D);
+  const slotName = (nameB ? parsePtpStr(nameB) : "").trim();
+  const fs = await cam.getU16(0xD192);
+  const dr = await cam.getU16(0xD190);
+  const gr = await cam.getU16(0xD195);
+  const cc = await cam.getU16(0xD196);
+  const cb = await cam.getU16(0xD197);
+  const wb = await cam.getU16(0xD199);
+  const sr = await cam.getI16(0xD19A);
+  const sb = await cam.getI16(0xD19B);
+  const kk = await cam.getU16(0xD19C);
+  const hi = await cam.getI16(0xD19D);
+  const sh = await cam.getI16(0xD19E);
+  const co = await cam.getI16(0xD19F);
+  const sp = await cam.getI16(0xD1A0);
+  const nr = await cam.getU16(0xD1A1);
+  const cl = await cam.getI16(0xD1A2);
+  const r = emptyRecipe();
+  r.name = slotName || ("相機 C"+slot);
+  r.notes = "從相機 C"+slot+" 讀取";
+  r.filmSim = pairLabel(FILM, fs) || r.filmSim;
+  r.dr = pairLabel(DRS, dr) || (dr===0 ? "自動" : r.dr);
+  r.grain = pairLabel(GRAIN, gr) || r.grain;
+  r.colorChrome = pairLabel(FX, cc) || r.colorChrome;
+  r.colorChromeBlue = pairLabel(FX, cb) || r.colorChromeBlue;
+  r.wb = pairLabel(WB, wb) || r.wb;
+  if(kk) r.kelvin = String(kk);
+  r.shiftR = sr==null ? "0" : ((sr>0?"+":"")+String(sr));
+  r.shiftB = sb==null ? "0" : ((sb>0?"+":"")+String(sb));
+  r.highlight = hi==null ? "0" : fmtTone(hi);
+  r.shadow = sh==null ? "0" : fmtTone(sh);
+  r.color = co==null ? "0" : fmtTone(co);
+  r.sharpness = sp==null ? "0" : fmtTone(sp);
+  r.clarity = cl==null ? "0" : fmtTone(cl);
+  if(nr!=null && NR_DEC[nr]!=null) r.nr = String(NR_DEC[nr]);
+  logCam("已讀 "+r.name+" / "+r.filmSim);
+  state.recipes.unshift(r);
+  save();
+  return r;
 }
 
 async function writeRecipeToSlot(recipe, slot){
@@ -848,6 +916,15 @@ $("#btn-cam").onclick = ()=>{ fillRecipeSelect(); show("cam"); };
 $("#connect").onclick = connectCam;
 $("#disconnect").onclick = disconnectCam;
 $("#read-slots").onclick = ()=>readSlots().catch(e=>logCam(e.message));
+$("#read-save").onclick = async ()=>{
+  if(!state.cam) return toast("先連相機");
+  const slot = Number($("#cam-slot").value);
+  try{
+    const r = await readSlotAsRecipe(slot);
+    shutter(); toast("已存成「"+r.name+"」");
+    renderDetail(r.id);
+  }catch(e){ logCam("讀取錯誤："+e.message); toast("讀取失敗"); }
+};
 $("#write-slot").onclick = async ()=>{
   const r = state.recipes.find(x=>x.id===$("#cam-recipe").value);
   if(!r) return toast("先選食譜");
@@ -880,6 +957,10 @@ $("#photo-file").addEventListener("change", async e=>{
   renderThumbs();
 });
 $("#detail").addEventListener("click", async e=>{
+  if(e.target.id==="share-this"){
+    const r=state.recipes.find(x=>x.id===state.current);
+    if(r) shareCard(r).catch(err=>toast("分享圖失敗"));
+  }
   if(e.target.id==="send-this"){
     fillRecipeSelect(); $("#cam-recipe").value = state.current; show("cam");
   }
@@ -891,6 +972,99 @@ $("#detail").addEventListener("click", async e=>{
     save(); toast("已刪除"); show("list"); renderList();
   }
 });
+
+
+async function getPhotoBlob(id){
+  const db = await openDB();
+  return new Promise((res,rej)=>{
+    const q = db.transaction("p").objectStore("p").get(id);
+    q.onsuccess = ()=>res(q.result||null);
+    q.onerror = ()=>rej(q.error);
+  });
+}
+
+async function shareCard(r){
+  toast("產生分享圖…");
+  let bmp = null;
+  if((r.photos||[])[0]){
+    const blob = await getPhotoBlob(r.photos[0]);
+    if(blob){
+      try { bmp = await createImageBitmap(blob, { imageOrientation: "from-image" }); }
+      catch { bmp = await createImageBitmap(blob); }
+    }
+  }
+  const maxW = 1600;
+  const photoW = bmp ? Math.min(bmp.width, maxW) : 1080;
+  const photoH = bmp ? Math.round(bmp.height * (photoW / bmp.width)) : 0;
+  const pad = 56;
+  const rows = [
+    ["軟片模擬", r.filmSim],
+    ["動態範圍", r.dr],
+    ["顆粒效果", r.grain],
+    ["彩色正片效果", r.colorChrome],
+    ["彩色正片FX藍", r.colorChromeBlue],
+    ["白平衡", r.wb==="色溫" ? ("色溫 "+(r.kelvin||"")+"K") : r.wb],
+    ["白平衡偏移", "R "+r.shiftR+"   B "+r.shiftB],
+    ["高光色調", r.highlight],
+    ["陰影色調", r.shadow],
+    ["色彩", r.color],
+    ["銳利度", r.sharpness],
+    ["高感光度降噪", r.nr],
+    ["清晰度", r.clarity],
+    ["ISO", r.iso||"—"],
+    ["曝光補償", r.ev||"—"]
+  ];
+  const rowH = 52;
+  const titleH = 110;
+  const w = Math.max(photoW + pad*2, 1000);
+  const h = pad + titleH + (photoH ? photoH + 28 : 0) + 24 + rows.length*rowH + pad;
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#161311";
+  ctx.fillRect(0,0,w,h);
+  ctx.fillStyle = "#f4eee4";
+  ctx.fillRect(28, 28, w-56, h-56);
+  ctx.fillStyle = "#e60012";
+  ctx.beginPath(); ctx.arc(72, 78, 10, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = "#2a2218";
+  ctx.font = "700 36px 'Noto Serif JP','Noto Serif TC',serif";
+  ctx.textBaseline = "middle";
+  ctx.fillText(r.name || "未命名食譜", 98, 78);
+  ctx.font = "500 20px 'Noto Sans TC',sans-serif";
+  ctx.fillStyle = "#7a6e62";
+  ctx.fillText("富士食譜工具", 98, 112);
+  let y = pad + titleH;
+  if(bmp){
+    const x = Math.round((w - photoW)/2);
+    ctx.drawImage(bmp, x, y, photoW, photoH);
+    y += photoH + 28;
+  }
+  ctx.strokeStyle = "#e0d2ba";
+  rows.forEach(([k,v],i)=>{
+    const yy = y + i*rowH;
+    ctx.beginPath(); ctx.moveTo(pad, yy); ctx.lineTo(w-pad, yy); ctx.stroke();
+    ctx.font = "500 22px 'Noto Sans TC',sans-serif";
+    ctx.fillStyle = "#7a6e62";
+    ctx.textAlign = "left";
+    ctx.fillText(k, pad+8, yy + 32);
+    ctx.font = "700 24px 'Noto Sans TC',sans-serif";
+    ctx.fillStyle = "#2a2218";
+    ctx.textAlign = "right";
+    ctx.fillText(String(v??"—"), w-pad-8, yy + 32);
+  });
+  ctx.textAlign = "left";
+  shutter();
+  await new Promise((res,rej)=>c.toBlob(b=>{
+    if(!b) return rej();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(b);
+    a.download = (r.name || "recipe") + ".jpg";
+    a.click();
+    res();
+  }, "image/jpeg", 0.92));
+  toast("已下載分享圖");
+}
 
 function exportSettings(){
   const blob = new Blob([JSON.stringify({
