@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="icon-192.png" />
   <title>拍立得 · 富士食譜工具</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&family=Noto+Serif+JP:wght@600&family=Noto+Serif+TC:wght@600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Noto+Sans+TC:wght@400;600;700&family=Noto+Serif+JP:wght@600&family=Noto+Serif+TC:wght@600&family=Share+Tech+Mono&family=Zen+MaruGothic:wght@500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --sumi:#161311; --char:#2b2622; --paper:#f4eee4; --ink:#2a2218;
@@ -48,23 +48,21 @@
       opacity:0; margin:0; cursor:pointer; font-size:16px;
     }
     .stage { display:grid; place-items:center; margin:8px 0 16px; }
-    .polaroid {
-      width:min(90vw, 440px); position:relative;
+    .polaroid-container {
+      width:min(90vw, 440px);
       box-shadow:0 18px 40px rgba(0,0,0,.45);
       animation:drop .55s cubic-bezier(.2,1.1,.3,1);
       overflow:hidden;
+      border-radius:4px;
     }
-    .polaroid.white { background:#f7f3ec; }
-    .polaroid.black { background:#111; }
-    .polaroid.tint { background:rgba(80,70,60,.55); }
-    .pad { padding:4.6% 4.6% 0; }
-    #photo { width:100%; display:block; background:#222; }
-    .caption { position:relative; height:92px; user-select:none; touch-action:none; }
-    .txt { position:absolute; top:14px; max-width:62%; line-height:1.25; cursor:grab; }
-    .txt:active { cursor:grabbing; }
-    .txt b { display:block; }
-    .txt.left { left:6%; text-align:left; }
-    .txt.right { right:6%; text-align:right; }
+    #mainCanvas {
+      width:100%;
+      height:auto;
+      display:block;
+      cursor:grab;
+      touch-action:none;
+      user-select:none;
+    }
     .form { display:grid; gap:10px; }
     label.field { display:grid; gap:6px; font-size:12px; color:var(--muted); }
     .field input,.field select {
@@ -84,14 +82,6 @@
     }
     .ratios button.on, .sides button.on { outline:2px solid #e60012; }
     .sides { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .stamp {
-      position:absolute; top:18%; writing-mode:vertical-rl; letter-spacing:.18em;
-      font-size:11px; font-weight:700; cursor:grab; touch-action:none; user-select:none;
-    }
-    .stamp.left { left:1.6%; }
-    .stamp.right { right:1.6%; }
-    .stamp.off { display:none; }
-    #photo { cursor:grab; touch-action:none; }
     .frames { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
     .frames button { border:0; min-height:42px; border-radius:12px; font-weight:700; font-size:13px; }
     .frames .w { background:#f7f3ec; color:#2a2218; }
@@ -100,7 +90,6 @@
     .frames button.on { outline:2px solid #e60012; }
     .shutter { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:40; }
     .shutter.go { animation:flash .42s ease; }
-    .hidden { display:none; }
     @keyframes drop { from { opacity:0; transform:translateY(-22px) rotate(-6deg);} to { opacity:1; transform:none;} }
     @keyframes flash { 0%{opacity:0} 20%{opacity:1} 100%{opacity:0} }
   </style>
@@ -128,13 +117,8 @@
       <button data-aspect="wide">Wide</button>
     </div>
     <div class="stage">
-      <div class="polaroid white" id="frame">
-        <div class="stamp off" id="stamp"></div>
-        <div class="pad"><canvas id="photo" width="1200" height="900"></canvas></div>
-        <div class="caption" id="caption">
-          <div class="txt left" id="boxL" data-side="left"><b id="t-cam">相機</b><span id="t-lens">鏡頭</span></div>
-          <div class="txt right" id="boxR" data-side="right"><b id="t-exp">ISO · f/ · 快門</b></div>
-        </div>
+      <div class="polaroid-container">
+        <canvas id="mainCanvas"></canvas>
       </div>
     </div>
     <div class="form">
@@ -153,6 +137,8 @@
             <option value="sans">無襯線</option>
             <option value="serif">襯線</option>
             <option value="mono">等寬</option>
+            <option value="hand">手寫</option>
+            <option value="round">圓體</option>
           </select>
         </label>
         <label class="field">大小
@@ -165,12 +151,22 @@
         </label>
         <label class="field">顏色<input id="color" type="color" value="#2c261e"></label>
       </div>
-      <label class="field">日期戳
-        <select id="date-on">
-          <option value="off">關</option>
-          <option value="on">開</option>
-        </select>
-      </label>
+      <div class="row2">
+        <label class="field">日期戳
+          <select id="date-on">
+            <option value="off">關</option>
+            <option value="on">開</option>
+          </select>
+        </label>
+        <label class="field">日期字體大小
+          <select id="date-size">
+            <option value="10">小</option>
+            <option value="12" selected>中</option>
+            <option value="15">大</option>
+            <option value="18">特大</option>
+          </select>
+        </label>
+      </div>
       <label class="field">日期<input id="date-text" placeholder="2026.09.07"></label>
       <div class="sides" id="date-sides">
         <button class="on" data-side="left">左側</button>
@@ -180,440 +176,530 @@
       <button class="pbtn ghost full" id="reset-crop">重設裁切</button>
       <button class="pbtn red full" id="save">下載拍立得</button>
     </div>
-    <p class="hint">拖動照片調整裁切，電腦可用滾輪縮放。日期為直書，可關、可改色與上下位置。</p>
+    <p class="hint">拖動照片調整裁切，電腦可用滾輪縮放。可直接在畫面上拖動文字與日期位置。</p>
   </div>
+
 <script>
 const $ = s => document.querySelector(s);
-const flash = () => { const s=$("#shutter"); s.classList.remove("go"); void s.offsetWidth; s.classList.add("go"); };
+
+// 機械快門音效 (雙重簾幕撞擊「咔-噠」聲)
+function playCameraSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    [0.0, 0.08].forEach((delay, index) => {
+      // 1. 機械低頻彈簧與聲響底噪
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(index === 0 ? 180 : 120, now + delay);
+      osc.frequency.exponentialRampToValueAtTime(40, now + delay + 0.04);
+
+      oscGain.gain.setValueAtTime(0.8, now + delay);
+      oscGain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.04);
+
+      osc.connect(oscGain);
+      oscGain.connect(ctx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.04);
+
+      // 2. 高通濾波金屬簾幕摩擦噪訊
+      const bufSize = ctx.sampleRate * 0.03;
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 1000;
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.6, now + delay);
+      noiseGain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.03);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+
+      noise.start(now + delay);
+    });
+  } catch (e) {}
+}
+
+const flash = () => { 
+  const s = $("#shutter"); 
+  s.classList.remove("go"); 
+  void s.offsetWidth; 
+  s.classList.add("go"); 
+  playCameraSound();
+};
+
 const FONTS = {
   sans: '"Noto Sans TC", sans-serif',
-  serif: '"Noto Serif TC","Noto Serif JP", serif',
-  mono: '"Share Tech Mono", ui-monospace, monospace'
+  serif: '"Noto Serif TC", "Noto Serif JP", serif',
+  mono: '"Share Tech Mono", monospace',
+  hand: '"Caveat", cursive',
+  round: '"Zen Maru Gothic", sans-serif'
 };
+
+// 狀態管理
 let source = null;
 let frameStyle = "white";
-let tint = "rgba(120,90,70,.55)";
-let pos = { left: 6, right: 6 };
+let tintColor = "rgba(120,90,70,0.58)";
 let aspect = "orig";
-let crop = { z:1, x:0, y:0 };
+let crop = { z: 1, x: 0, y: 0 };
+let pos = { left: 6, right: 6 };
 let dateSide = "left";
 let datePos = 18;
 
-function applyType(){
-  const font = FONTS[$("#font").value] || FONTS.sans;
-  const size = Number($("#size").value)||14;
-  const color = $("#color").value;
-  ["boxL","boxR"].forEach(id=>{
-    const el = $("#"+id);
-    el.style.fontFamily = font;
-    el.style.color = color;
-  });
-  $("#t-cam").style.fontSize = size+"px";
-  $("#t-lens").style.fontSize = Math.max(11, size-2)+"px";
-  $("#t-exp").style.fontSize = size+"px";
+function getTargetPhotoSize() {
+  if (!source) return { w: 1400, h: 1050 };
+  let r = source.width / source.height;
+  if (aspect === "mini") r = 2 / 3;
+  else if (aspect === "square") r = 1;
+  else if (aspect === "wide") r = 3 / 2;
+  
+  const w = 1400;
+  return { w, h: Math.round(w / r) };
 }
-function applyPos(){
-  $("#boxL").style.left = pos.left+"%";
-  $("#boxL").style.right = "auto";
-  $("#boxR").style.right = pos.right+"%";
-  $("#boxR").style.left = "auto";
+
+function coverRect(w, h) {
+  if (!source) return { x:0, y:0, dw:w, dh:h };
+  const sw = source.width, sh = source.height;
+  const base = Math.max(w / sw, h / sh);
+  const s = base * Math.max(1, crop.z);
+  const dw = sw * s, dh = sh * s;
+  let x = (w - dw) / 2 + crop.x;
+  let y = (h - dh) / 2 + crop.y;
+  if (dw >= w) x = Math.min(0, Math.max(w - dw, x)); else x = (w - dw) / 2;
+  if (dh >= h) y = Math.min(0, Math.max(h - dh, y)); else y = (h - dh) / 2;
+  return { x, y, dw, dh };
 }
-function fillText(){
-  $("#t-cam").textContent = $("#cam").value.trim() || "相機";
-  $("#t-lens").textContent = $("#lens").value.trim();
+
+function drawAll() {
+  const canvas = $("#mainCanvas");
+  const ctx = canvas.getContext("2d");
+  
+  const photoDim = getTargetPhotoSize();
+  const sideMargin = Math.round(photoDim.w * 0.05);
+  const bottomMargin = Math.round(photoDim.w * 0.22);
+  
+  const totalW = photoDim.w + sideMargin * 2;
+  const totalH = photoDim.h + sideMargin + bottomMargin;
+  
+  canvas.width = totalW;
+  canvas.height = totalH;
+
+  // 1. 背景繪製
+  if (frameStyle === "black") {
+    ctx.fillStyle = "#111111";
+    ctx.fillRect(0, 0, totalW, totalH);
+  } else if (frameStyle === "tint") {
+    const m = tintColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    ctx.fillStyle = m ? `rgba(${m[1]},${m[2]},${m[3]},0.92)` : "#6a5344";
+    ctx.fillRect(0, 0, totalW, totalH);
+  } else {
+    ctx.fillStyle = "#f7f3ec";
+    ctx.fillRect(0, 0, totalW, totalH);
+  }
+
+  // 2. 照片區域繪製
+  const photoX = sideMargin;
+  const photoY = sideMargin;
+  
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(photoX, photoY, photoDim.w, photoDim.h);
+  ctx.clip();
+  
+  if (source) {
+    const r = coverRect(photoDim.w, photoDim.h);
+    ctx.drawImage(source, photoX + r.x, photoY + r.y, r.dw, r.dh);
+    sampleTint(ctx, photoX, photoY, photoDim.w, photoDim.h);
+  } else {
+    ctx.fillStyle = "#cfc6b8";
+    ctx.fillRect(photoX, photoY, photoDim.w, photoDim.h);
+  }
+  ctx.restore();
+
+  // 3. Exif 文字繪製
+  const fontKey = $("#font").value || "sans";
+  const font = FONTS[fontKey] || FONTS.sans;
+  const sizeBase = Number($("#size").value) || 14;
+  const fontSize = Math.round(sizeBase * (totalW / 360));
+  const textColor = $("#color").value;
+
+  ctx.fillStyle = textColor;
+  ctx.textBaseline = "top";
+
+  const captionY = photoY + photoDim.h + Math.round(bottomMargin * 0.22);
+
+  // 左側文字 (相機 & 鏡頭)
+  const leftX = photoX + (pos.left / 100) * photoDim.w;
+  const camText = $("#cam").value.trim() || "相機";
+  const lensText = $("#lens").value.trim();
+
+  ctx.textAlign = "left";
+  ctx.font = `700 ${fontSize}px ${font}`;
+  ctx.fillText(camText, leftX, captionY);
+
+  if (lensText) {
+    ctx.font = `500 ${Math.round(fontSize * 0.82)}px ${font}`;
+    ctx.fillText(lensText, leftX, captionY + fontSize + 8);
+  }
+
+  // 右側文字 (ISO / 光圈 / 快門)
+  const rightX = photoX + photoDim.w - (pos.right / 100) * photoDim.w;
   const iso = $("#iso").value.trim();
   const fnum = $("#fnum").value.trim();
   const shut = $("#shut").value.trim();
-  $("#t-exp").textContent = [iso && ("ISO "+iso.replace(/^ISO\s*/i,"")), fnum, shut].filter(Boolean).join("   ") || "ISO · f/ · 快門";
-}
-function setFrame(name){
-  frameStyle = name;
-  $("#frame").className = "polaroid " + name;
-  document.querySelectorAll(".frames button").forEach(b=>b.classList.toggle("on", b.dataset.frame===name));
-  if(name==="black"){
-    if($("#color").value==="#2c261e" || $("#color").value==="#2C261E") $("#color").value = "#f6efe4";
-  } else if(name==="white"){
-    if($("#color").value==="#f6efe4" || $("#color").value==="#F6EFE4") $("#color").value = "#2c261e";
+  const expText = [iso && ("ISO " + iso.replace(/^ISO\s*/i, "")), fnum, shut].filter(Boolean).join("   ") || "ISO · f/ · 快門";
+
+  ctx.textAlign = "right";
+  ctx.font = `700 ${fontSize}px ${font}`;
+  ctx.fillText(expText, rightX, captionY + 8);
+
+  // 4. 直書日期戳記繪製
+  const dateOn = $("#date-on").value === "on" && ($("#date-text").value || "").trim();
+  if (dateOn) {
+    const ds = ($("#date-text").value || "").trim();
+    const dateSizeBase = Number($("#date-size").value) || 12;
+    const dsize = Math.round(dateSizeBase * (totalW / 360));
+    
+    ctx.save();
+    ctx.fillStyle = textColor;
+    ctx.font = `700 ${dsize}px ${font}`;
+    
+    const tx = dateSide === "left" 
+      ? (sideMargin / 2) 
+      : (totalW - sideMargin / 2);
+      
+    const ty = photoY + (datePos / 100) * photoDim.h;
+    
+    ctx.translate(tx, ty);
+    ctx.rotate(Math.PI / 2);
+    
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(ds, 0, 0);
+    ctx.restore();
   }
-  if(name==="tint") $("#frame").style.background = tint;
-  else $("#frame").style.background = "";
-  applyType();
 }
 
-function winSize(){
-  if(!source) return {w:1200,h:900};
-  let r = source.width/source.height;
-  if(aspect==="mini") r=2/3;
-  else if(aspect==="square") r=1;
-  else if(aspect==="wide") r=3/2;
-  const max=1600;
-  if(r>=1) return {w:max, h:Math.max(1,Math.round(max/r))};
-  return {w:Math.max(1,Math.round(max*r)), h:max};
-}
-function coverRect(w,h){
-  const sw=source.width, sh=source.height;
-  const base=Math.max(w/sw, h/sh);
-  const s=base*Math.max(1, crop.z);
-  const dw=sw*s, dh=sh*s;
-  let x=(w-dw)/2+crop.x;
-  let y=(h-dh)/2+crop.y;
-  if(dw>=w) x=Math.min(0, Math.max(w-dw, x)); else x=(w-dw)/2;
-  if(dh>=h) y=Math.min(0, Math.max(h-dh, y)); else y=(h-dh)/2;
-  return {x,y,dw,dh};
-}
-function applyStamp(){
-  const el=$("#stamp");
-  const on=$("#date-on").value==="on";
-  const text=($("#date-text").value||"").trim();
-  el.textContent = text;
-  el.className = "stamp " + (on && text ? dateSide : "off");
-  el.style.color = $("#color").value;
-  el.style.top = datePos + "%";
-}
-function drawPreview(){
-  const c = $("#photo");
-  const ctx = c.getContext("2d");
-  if(!source){
-    c.width = 1200; c.height = 900;
-    ctx.fillStyle = "#cfc6b8"; ctx.fillRect(0,0,c.width,c.height);
-    applyStamp();
-    return;
-  }
-  const {w,h}=winSize();
-  c.width=w; c.height=h;
-  ctx.fillStyle="#222"; ctx.fillRect(0,0,w,h);
-  const r=coverRect(w,h);
-  ctx.drawImage(source, r.x, r.y, r.dw, r.dh);
-  sampleTint(ctx, w, h);
-  applyStamp();
-}
-
-function sampleTint(ctx, w, h){
-  try{
-    const step = Math.max(8, Math.floor(Math.min(w,h)/24));
-    let r=0,g=0,b=0,n=0;
-    const data = ctx.getImageData(0,0,w,h).data;
-    for(let y=0;y<h;y+=step){
-      for(let x=0;x<w;x+=step){
-        const i = (y*w+x)*4;
-        r+=data[i]; g+=data[i+1]; b+=data[i+2]; n++;
+function sampleTint(ctx, px, py, pw, ph) {
+  try {
+    const step = Math.max(12, Math.floor(Math.min(pw, ph) / 20));
+    let r = 0, g = 0, b = 0, n = 0;
+    const imgData = ctx.getImageData(px, py, pw, ph).data;
+    for (let y = 0; y < ph; y += step) {
+      for (let x = 0; x < pw; x += step) {
+        const i = (y * pw + x) * 4;
+        r += imgData[i]; g += imgData[i + 1]; b += imgData[i + 2]; n++;
       }
     }
-    if(!n) return;
-    r=Math.round(r/n); g=Math.round(g/n); b=Math.round(b/n);
-    tint = "rgba("+r+","+g+","+b+",0.58)";
-    if(frameStyle==="tint") $("#frame").style.background = tint;
-  }catch(e){}
+    if (!n) return;
+    r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
+    tintColor = `rgba(${r},${g},${b},0.58)`;
+  } catch(e) {}
 }
 
 function fmtShutter(v){
-  if(!v || !isFinite(v) || v<=0) return "";
-  if(v>=1) return Number(v.toFixed(1))+"s";
-  return "1/"+Math.round(1/v);
+  if (!v || !isFinite(v) || v <= 0) return "";
+  if (v >= 1) return Number(v.toFixed(1)) + "s";
+  return "1/" + Math.round(1 / v);
 }
+
 function fmtF(v){
-  if(!v || !isFinite(v)) return "";
-  const n = v>=10 ? v.toFixed(0) : v.toFixed(1);
-  return "f/"+n.replace(/\.0$/,"");
+  if (!v || !isFinite(v)) return "";
+  const n = v >= 10 ? v.toFixed(0) : v.toFixed(1);
+  return "f/" + n.replace(/\.0$/, "");
 }
+
 function cleanCam(make, model){
-  model = (model||"").replace(/^FUJIFILM\s+/i,"").trim();
-  make = (make||"").trim();
-  if(!model && !make) return "";
-  if(model && make && !/fuji/i.test(make) && !model.toUpperCase().includes(make.split(" ")[0].toUpperCase()))
-    return (make+" "+model).trim();
+  model = (model || "").replace(/^FUJIFILM\s+/i, "").trim();
+  make = (make || "").trim();
+  if (!model && !make) return "";
+  if (model && make && !/fuji/i.test(make) && !model.toUpperCase().includes(make.split(" ")[0].toUpperCase()))
+    return (make + " " + model).trim();
   return model || make;
 }
 
 async function readExif(buf){
   const u8 = new Uint8Array(buf);
-  if(u8[0]!==0xFF || u8[1]!==0xD8) return {};
-  let off=2;
-  while(off+4<u8.length){
-    if(u8[off]!==0xFF) break;
-    const marker=u8[off+1], size=(u8[off+2]<<8)|u8[off+3];
-    if(marker===0xE1){
-      const start=off+4;
-      const head=String.fromCharCode.apply(null, Array.from(u8.slice(start,start+6)));
-      if(head.startsWith("Exif")) return parseTiff(buf, start+6);
+  if (u8[0] !== 0xFF || u8[1] !== 0xD8) return {};
+  let off = 2;
+  while (off + 4 < u8.length) {
+    if (u8[off] !== 0xFF) break;
+    const marker = u8[off + 1], size = (u8[off + 2] << 8) | u8[off + 3];
+    if (marker === 0xE1) {
+      const start = off + 4;
+      const head = String.fromCharCode.apply(null, Array.from(u8.slice(start, start + 6)));
+      if (head.startsWith("Exif")) return parseTiff(buf, start + 6);
     }
-    if(marker===0xDA) break;
-    off += 2+size;
+    if (marker === 0xDA) break;
+    off += 2 + size;
   }
   return {};
 }
+
 function parseTiff(buf, start){
   const v = new DataView(buf);
-  const le = v.getUint8(start)===0x49;
-  const u16 = o => v.getUint16(start+o, le);
-  const u32 = o => v.getUint32(start+o, le);
-  const decode = (type,count,valOff)=>{
-    const unit = {1:1,2:1,3:2,4:4,5:8,7:1}[type]||1;
-    const inline = unit*count<=4;
+  const le = v.getUint8(start) === 0x49;
+  const u16 = o => v.getUint16(start + o, le);
+  const u32 = o => v.getUint32(start + o, le);
+  const decode = (type, count, valOff) => {
+    const unit = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 7: 1 }[type] || 1;
+    const inline = unit * count <= 4;
     const o = inline ? valOff : u32(valOff);
-    try{
-      if(type===2){
-        let s=""; for(let i=0;i<count-1;i++){ const c=v.getUint8(start+o+i); if(!c) break; s+=String.fromCharCode(c);} return s;
+    try {
+      if (type === 2) {
+        let s = ""; for (let i = 0; i < count - 1; i++) { const c = v.getUint8(start + o + i); if (!c) break; s += String.fromCharCode(c); } return s;
       }
-      if(type===3) return v.getUint16(start+o,le);
-      if(type===4) return v.getUint32(start+o,le);
-      if(type===5){
-        const n=v.getUint32(start+o,le), d=v.getUint32(start+o+4,le); return d?n/d:0;
+      if (type === 3) return v.getUint16(start + o, le);
+      if (type === 4) return v.getUint32(start + o, le);
+      if (type === 5) {
+        const n = v.getUint32(start + o, le), d = v.getUint32(start + o + 4, le); return d ? n / d : 0;
       }
-    }catch(e){}
+    } catch(e) {}
     return "";
   };
   const readIFD = rel => {
-    const n=u16(rel), tags={};
-    for(let i=0;i<n;i++){
-      const e=rel+2+i*12;
-      tags[u16(e)] = decode(u16(e+2), u32(e+4), e+8);
+    const n = u16(rel), tags = {};
+    for (let i = 0; i < n; i++) {
+      const e = rel + 2 + i * 12;
+      tags[u16(e)] = decode(u16(e + 2), u32(e + 4), e + 8);
     }
     return tags;
   };
   const ifd0 = readIFD(u32(4));
   const exif = ifd0[0x8769] ? readIFD(ifd0[0x8769]) : {};
   return {
-    make: ifd0[0x010F]||"",
-    model: ifd0[0x0110]||"",
-    lens: exif[0xA434]||"",
-    iso: exif[0x8827]||exif[0x8833]||"",
-    fnum: exif[0x829D]||"",
-    shut: exif[0x829A]||"",
-    date: exif[0x9003]||exif[0x9004]||ifd0[0x0132]||""
+    make: ifd0[0x010F] || "",
+    model: ifd0[0x0110] || "",
+    lens: exif[0xA434] || "",
+    iso: exif[0x8827] || exif[0x8833] || "",
+    fnum: exif[0x829D] || "",
+    shut: exif[0x829A] || "",
+    date: exif[0x9003] || exif[0x9004] || ifd0[0x0132] || ""
   };
 }
 
 async function loadFile(file){
   const buf = await file.arrayBuffer();
-  let meta={};
-  try{ meta = await readExif(buf); }catch(e){}
+  let meta = {};
+  try { meta = await readExif(buf); } catch(e) {}
   $("#cam").value = cleanCam(meta.make, meta.model);
-  $("#lens").value = (meta.lens||"").trim();
+  $("#lens").value = (meta.lens || "").trim();
   $("#iso").value = meta.iso ? String(meta.iso) : "";
   $("#fnum").value = fmtF(Number(meta.fnum));
-  $("#shut").value = typeof meta.shut==="number" ? fmtShutter(meta.shut) : "";
-  if(meta.date){
-    const m=String(meta.date).match(/(\d{4}).(\d{2}).(\d{2})/);
-    if(m) $("#date-text").value=m[1]+"."+m[2]+"."+m[3];
+  $("#shut").value = typeof meta.shut === "number" ? fmtShutter(meta.shut) : "";
+  if (meta.date) {
+    const m = String(meta.date).match(/(\d{4}).(\d{2}).(\d{2})/);
+    if (m) $("#date-text").value = m[1] + "." + m[2] + "." + m[3];
   }
-  crop={z:1,x:0,y:0};
-  fillText();
+  crop = { z: 1, x: 0, y: 0 };
   const blob = new Blob([buf], { type: file.type || "image/jpeg" });
-  try{
+  try {
     source = await createImageBitmap(blob, { imageOrientation: "from-image" });
-  }catch(e){
-    try{
+  } catch(e) {
+    try {
       source = await createImageBitmap(blob);
-    }catch(e2){
+    } catch(e2) {
       const url = URL.createObjectURL(blob);
       const img = new Image();
-      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
       source = await createImageBitmap(img);
       URL.revokeObjectURL(url);
     }
   }
-  drawPreview();
+  drawAll();
 }
 
-
-function exportCard(){
-  if(!source){ alert("先上傳照片"); return; }
-  drawPreview();
-  const photo = $("#photo");
-  const dateOn = $("#date-on").value==="on" && ($("#date-text").value||"").trim();
-  const side = Math.round(photo.width * (dateOn ? 0.09 : 0.046));
-  const bottom = Math.round(photo.width * 0.22);
-  const w = photo.width + side*2;
-  const h = photo.height + side + bottom;
-  const out = document.createElement("canvas");
-  out.width=w; out.height=h;
-  const ctx=out.getContext("2d");
-  if(frameStyle==="black") ctx.fillStyle="#111";
-  else if(frameStyle==="tint"){
-    const m = tint.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-    ctx.fillStyle = m ? "rgba("+m[1]+","+m[2]+","+m[3]+",0.92)" : "#6a5344";
-  } else ctx.fillStyle="#f7f3ec";
-  ctx.fillRect(0,0,w,h);
-  if(frameStyle==="tint"){
-    ctx.globalAlpha = 0.35;
-    ctx.drawImage(photo, side-18, side-18, photo.width+36, photo.height+36);
-    ctx.globalAlpha = 1;
-  }
-  ctx.drawImage(photo, side, side);
-  const color = $("#color").value;
-  const font = FONTS[$("#font").value]||FONTS.sans;
-  const size = Math.round((Number($("#size").value)||14) * (photo.width/360));
-  ctx.fillStyle = color;
-  ctx.textBaseline = "top";
-  const y = side + photo.height + Math.round(bottom*0.22);
-  const cam = $("#cam").value.trim();
-  const lens = $("#lens").value.trim();
-  const iso = $("#iso").value.trim();
-  const fnum = $("#fnum").value.trim();
-  const shut = $("#shut").value.trim();
-  const leftX = side + (pos.left/100)*photo.width;
-  ctx.textAlign="left";
-  ctx.font = "700 "+size+"px "+font;
-  ctx.fillText(cam||"", leftX, y);
-  ctx.font = "500 "+Math.round(size*0.82)+"px "+font;
-  ctx.fillText(lens||"", leftX, y+size+6);
-  const rightX = w - side - (pos.right/100)*photo.width;
-  ctx.textAlign="right";
-  ctx.font = "700 "+size+"px "+font;
-  ctx.fillText([iso && ("ISO "+iso.replace(/^ISO\s*/i,"")), fnum, shut].filter(Boolean).join("   "), rightX, y+8);
-  if(dateOn){
-    const ds=($("#date-text").value||"").trim();
-    const dsize=Math.round(photo.width*0.028);
-    ctx.save();
-    ctx.fillStyle=$("#color").value;
-    ctx.font="700 "+dsize+"px "+font;
-    ctx.textAlign="left";
-    ctx.textBaseline="top";
-    const along = datePos/100;
-    const tx = dateSide==="left" ? Math.round(side*0.28) : w-Math.round(side*0.72);
-    const ty = side + photo.height*along;
-    ctx.translate(tx, ty);
-    ctx.rotate(Math.PI/2);
-    ctx.fillText(ds, 0, 0);
-    ctx.restore();
-  }
+function exportCard() {
+  if (!source) { alert("先上傳照片"); return; }
+  drawAll();
   flash();
-  out.toBlob(function(b){
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(b);
-    a.download="polaroid.jpg";
+  const canvas = $("#mainCanvas");
+  canvas.toBlob(function(b) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(b);
+    a.download = "polaroid.jpg";
     a.click();
-  },"image/jpeg",0.92);
+  }, "image/jpeg", 0.92);
 }
 
-function bindDrag(el, side){
-  const down = ev => {
-    ev.preventDefault();
-    const startX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-    const start = pos[side];
-    const move = e => {
-      const cx = e.touches ? e.touches[0].clientX : e.clientX;
-      const cap = $("#caption").getBoundingClientRect();
-      const dx = ((cx-startX)/cap.width)*100;
-      let next = start + (side==="left"?dx:-dx);
-      next = Math.max(2, Math.min(48, next));
-      pos[side]=next; applyPos();
-    };
-    const up = () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-      window.removeEventListener("touchmove", move);
-      window.removeEventListener("touchend", up);
-    };
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-    window.addEventListener("touchmove", move, {passive:false});
-    window.addEventListener("touchend", up);
-  };
-  el.addEventListener("mousedown", down);
-  el.addEventListener("touchstart", down, {passive:false});
-}
+// 事件繫結
+["cam","lens","iso","fnum","shut","font","size","color","date-on","date-size","date-text"].forEach(id => {
+  $("#" + id).addEventListener("input", drawAll);
+});
 
-$("#file").addEventListener("change", e=>{
-  const f=e.target.files && e.target.files[0];
-  if(f) loadFile(f).catch(err=>alert(err.message||"讀取照片失敗"));
-});
-["cam","lens","iso","fnum","shut"].forEach(id => $("#"+id).addEventListener("input", fillText));
-["font","size","color"].forEach(id => $("#"+id).addEventListener("input", applyType));
-document.querySelectorAll(".frames button").forEach(b=>b.onclick=()=>setFrame(b.dataset.frame));
-document.querySelectorAll("#ratios button").forEach(b=>b.onclick=()=>{
-  aspect=b.dataset.aspect;
-  document.querySelectorAll("#ratios button").forEach(x=>x.classList.toggle("on", x===b));
-  crop={z:1,x:0,y:0}; drawPreview();
-});
-document.querySelectorAll("#date-sides button").forEach(b=>b.onclick=()=>{
-  dateSide=b.dataset.side;
-  document.querySelectorAll("#date-sides button").forEach(x=>x.classList.toggle("on", x===b));
-  applyStamp();
-});
-["date-on","date-text","color"].forEach(id=>$("#"+id).addEventListener("input", applyStamp));
-$("#date-on").addEventListener("change", applyStamp);
-$("#reset").onclick=()=>{ pos={left:6,right:6}; applyPos(); };
-$("#reset-crop").onclick=()=>{ crop={z:1,x:0,y:0}; drawPreview(); };
-$("#save").onclick=exportCard;
-(function bindCrop(){
-  const c=$("#photo");
-  let dragging=false, pinching=false, sx=0, sy=0, ox=0, oy=0, startZ=1, startDist=0;
-  const pt=e=> e.touches?e.touches[0]:e;
-  const dist=e=>{
-    const a=e.touches[0], b=e.touches[1];
-    const dx=a.clientX-b.clientX, dy=a.clientY-b.clientY;
-    return Math.hypot(dx,dy);
+document.querySelectorAll(".frames button").forEach(b => {
+  b.onclick = () => {
+    frameStyle = b.dataset.frame;
+    document.querySelectorAll(".frames button").forEach(x => x.classList.toggle("on", x === b));
+    if (frameStyle === "black") $("#color").value = "#f6efe4";
+    else if (frameStyle === "white") $("#color").value = "#2c261e";
+    drawAll();
   };
-  const down=e=>{
-    if(!source) return;
-    e.preventDefault();
-    if(e.touches && e.touches.length>=2){
-      pinching=true; dragging=false;
-      startDist=dist(e); startZ=crop.z;
+});
+
+document.querySelectorAll("#ratios button").forEach(b => {
+  b.onclick = () => {
+    aspect = b.dataset.aspect;
+    document.querySelectorAll("#ratios button").forEach(x => x.classList.toggle("on", x === b));
+    crop = { z: 1, x: 0, y: 0 };
+    drawAll();
+  };
+});
+
+document.querySelectorAll("#date-sides button").forEach(b => {
+  b.onclick = () => {
+    dateSide = b.dataset.side;
+    document.querySelectorAll("#date-sides button").forEach(x => x.classList.toggle("on", x === b));
+    drawAll();
+  };
+});
+
+$("#reset").onclick = () => { pos = { left: 6, right: 6 }; datePos = 18; drawAll(); };
+$("#reset-crop").onclick = () => { crop = { z: 1, x: 0, y: 0 }; drawAll(); };
+$("#save").onclick = exportCard;
+$("#file").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0];
+  if (f) loadFile(f).catch(err => alert(err.message || "讀取照片失敗"));
+});
+
+// Canvas 觸控與互動
+(function bindCanvasInteractions() {
+  const canvas = $("#mainCanvas");
+  let mode = null;
+  let sx = 0, sy = 0;
+  let ox = 0, oy = 0;
+  let startPosVal = 0;
+  let pinching = false, startZ = 1, startDist = 0;
+
+  const pt = e => e.touches ? e.touches[0] : e;
+  const dist = e => {
+    const a = e.touches[0], b = e.touches[1];
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  };
+
+  const getCanvasCoords = e => {
+    const rect = canvas.getBoundingClientRect();
+    const p = pt(e);
+    const scale = canvas.width / rect.width;
+    return {
+      x: (p.clientX - rect.left) * scale,
+      y: (p.clientY - rect.top) * scale
+    };
+  };
+
+  const down = e => {
+    if (!source) return;
+    
+    if (e.touches && e.touches.length >= 2) {
+      pinching = true;
+      mode = "crop";
+      startDist = dist(e);
+      startZ = crop.z;
       return;
     }
-    dragging=true; pinching=false; c.style.cursor="grabbing";
-    sx=pt(e).clientX; sy=pt(e).clientY; ox=crop.x; oy=crop.y;
+
+    const { x, y } = getCanvasCoords(e);
+    const photoDim = getTargetPhotoSize();
+    const sideMargin = Math.round(photoDim.w * 0.05);
+    const photoY = sideMargin;
+    const captionY = photoY + photoDim.h;
+
+    if (y > captionY) {
+      if (x < canvas.width / 2) {
+        mode = "textL";
+        startPosVal = pos.left;
+      } else {
+        mode = "textR";
+        startPosVal = pos.right;
+      }
+    } else if ($("#date-on").value === "on" && x < sideMargin * 2 && dateSide === "left") {
+      mode = "stamp";
+      startPosVal = datePos;
+    } else if ($("#date-on").value === "on" && x > canvas.width - sideMargin * 2 && dateSide === "right") {
+      mode = "stamp";
+      startPosVal = datePos;
+    } else {
+      mode = "crop";
+      ox = crop.x;
+      oy = crop.y;
+    }
+
+    sx = pt(e).clientX;
+    sy = pt(e).clientY;
+    canvas.style.cursor = "grabbing";
   };
-  const move=e=>{
-    if(pinching && e.touches && e.touches.length>=2){
+
+  const move = e => {
+    if (!mode) return;
+    
+    if (pinching && e.touches && e.touches.length >= 2) {
       e.preventDefault();
-      const d=dist(e);
-      crop.z=Math.max(1, Math.min(4, startZ*(d/Math.max(1,startDist))));
-      drawPreview();
+      const d = dist(e);
+      crop.z = Math.max(1, Math.min(4, startZ * (d / Math.max(1, startDist))));
+      drawAll();
       return;
     }
-    if(!dragging) return;
-    const box=c.getBoundingClientRect();
-    const k=c.width/box.width;
-    crop.x=ox+(pt(e).clientX-sx)*k;
-    crop.y=oy+(pt(e).clientY-sy)*k;
-    drawPreview();
+
+    e.preventDefault();
+    const photoDim = getTargetPhotoSize();
+    const rect = canvas.getBoundingClientRect();
+    const scale = canvas.width / rect.width;
+
+    const dx = (pt(e).clientX - sx) * scale;
+    const dy = (pt(e).clientY - sy) * scale;
+
+    if (mode === "crop") {
+      crop.x = ox + dx;
+      crop.y = oy + dy;
+    } else if (mode === "textL") {
+      const deltaPercent = (dx / photoDim.w) * 100;
+      pos.left = Math.max(2, Math.min(45, startPosVal + deltaPercent));
+    } else if (mode === "textR") {
+      const deltaPercent = (-dx / photoDim.w) * 100;
+      pos.right = Math.max(2, Math.min(45, startPosVal + deltaPercent));
+    } else if (mode === "stamp") {
+      const deltaPercent = (dy / photoDim.h) * 100;
+      datePos = Math.max(4, Math.min(86, startPosVal + deltaPercent));
+    }
+
+    drawAll();
   };
-  const up=()=>{ dragging=false; pinching=false; c.style.cursor="grab"; };
-  c.addEventListener("mousedown", down);
+
+  const up = () => {
+    mode = null;
+    pinching = false;
+    canvas.style.cursor = "grab";
+  };
+
+  canvas.addEventListener("mousedown", down);
   window.addEventListener("mousemove", move);
   window.addEventListener("mouseup", up);
-  c.addEventListener("touchstart", down, {passive:false});
-  window.addEventListener("touchmove", move, {passive:false});
+
+  canvas.addEventListener("touchstart", down, { passive: false });
+  window.addEventListener("touchmove", move, { passive: false });
   window.addEventListener("touchend", up);
-  c.addEventListener("wheel", e=>{
-    if(!source) return;
+
+  canvas.addEventListener("wheel", e => {
+    if (!source) return;
     e.preventDefault();
-    crop.z = Math.max(1, Math.min(4, crop.z + (e.deltaY<0?0.08:-0.08)));
-    drawPreview();
-  }, {passive:false});
+    crop.z = Math.max(1, Math.min(4, crop.z + (e.deltaY < 0 ? 0.08 : -0.08)));
+    drawAll();
+  }, { passive: false });
 })();
 
-(function bindStamp(){
-  const el=$("#stamp");
-  let dragging=false, sy=0, start=18;
-  const pt=e=>e.touches?e.touches[0]:e;
-  const down=e=>{
-    if(el.classList.contains("off")) return;
-    e.preventDefault(); e.stopPropagation();
-    dragging=true; el.style.cursor="grabbing";
-    sy=pt(e).clientY; start=datePos;
-  };
-  const move=e=>{
-    if(!dragging) return;
-    const box=$("#frame").getBoundingClientRect();
-    datePos = Math.max(6, Math.min(78, start + ((pt(e).clientY-sy)/box.height)*100));
-    applyStamp();
-  };
-  const up=()=>{ dragging=false; el.style.cursor="grab"; };
-  el.addEventListener("mousedown", down);
-  el.addEventListener("touchstart", down, {passive:false});
-  window.addEventListener("mousemove", move);
-  window.addEventListener("mouseup", up);
-  window.addEventListener("touchmove", move, {passive:false});
-  window.addEventListener("touchend", up);
-})();
-bindDrag($("#boxL"),"left");
-bindDrag($("#boxR"),"right");
-applyType(); applyPos(); drawPreview();
+drawAll();
 </script>
 </body>
 </html>
