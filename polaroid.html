@@ -37,10 +37,15 @@
     .pbtn.ghost { background:transparent; color:var(--cream); box-shadow:inset 0 0 0 1px var(--line); }
     .pbtn.full { width:100%; }
     .wrap { padding:16px; max-width:760px; margin:0 auto; padding-bottom:calc(32px + var(--safe-b)); }
-    .drop {
-      border:1px dashed #6a5f55; border-radius:16px; min-height:88px;
-      display:grid; place-items:center; text-align:center; color:var(--muted);
-      background:var(--char); margin-bottom:14px;
+    .pick {
+      position:relative; display:grid; place-items:center;
+      width:100%; min-height:48px; margin-bottom:14px;
+      border:0; border-radius:999px; background:var(--paper); color:var(--ink);
+      font-weight:700;
+    }
+    .pick input {
+      position:absolute; inset:0; width:100%; height:100%;
+      opacity:0; margin:0; cursor:pointer; font-size:16px;
     }
     .stage { display:grid; place-items:center; margin:8px 0 16px; }
     .polaroid {
@@ -89,9 +94,10 @@
     <div class="brand"><h1>拍立得</h1></div>
   </header>
   <div class="wrap">
-    <label class="drop">點這裡上傳照片<br><small>建議相機 JPEG，直式會保持直式</small>
-      <input class="hidden" id="file" type="file" accept="image/*" />
+    <label class="pick">選擇照片
+      <input id="file" type="file" accept="image/jpeg,image/png,image/heic,image/heif,image/*" />
     </label>
+    <p class="hint">iPhone 選圖後若有「加入／完成」請按下去。建議相機 JPEG。</p>
     <div class="frames">
       <button class="w on" data-frame="white">白框</button>
       <button class="k" data-frame="black">黑框</button>
@@ -349,10 +355,19 @@ async function loadFile(file){
     ? ("已讀到定位 "+lastGps.lat.toFixed(5)+", "+lastGps.lon.toFixed(5))
     : "這張沒有 GPS。請用相機原圖（X-T50／X-E5 需與手機同步位置）。";
   fillText();
+  const blob = new Blob([buf], { type: file.type || "image/jpeg" });
   try{
-    source = await createImageBitmap(file, { imageOrientation: "from-image" });
+    source = await createImageBitmap(blob, { imageOrientation: "from-image" });
   }catch(e){
-    source = await createImageBitmap(file);
+    try{
+      source = await createImageBitmap(blob);
+    }catch(e2){
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+      source = await createImageBitmap(img);
+      URL.revokeObjectURL(url);
+    }
   }
   drawPreview();
 }
@@ -553,8 +568,10 @@ function bindDrag(el, side){
   el.addEventListener("touchstart", down, {passive:false});
 }
 
-document.querySelector(".drop").addEventListener("click", ()=>$("#file").click());
-$("#file").addEventListener("change", e=>{ const f=e.target.files[0]; if(f) loadFile(f); e.target.value=""; });
+$("#file").addEventListener("change", e=>{
+  const f=e.target.files && e.target.files[0];
+  if(f) loadFile(f).catch(err=>alert(err.message||"讀取照片失敗"));
+});
 ["cam","lens","iso","fnum","shut"].forEach(id => $("#"+id).addEventListener("input", fillText));
 ["font","size","color"].forEach(id => $("#"+id).addEventListener("input", applyType));
 document.querySelectorAll(".frames button").forEach(b=>b.onclick=()=>setFrame(b.dataset.frame));

@@ -11,6 +11,7 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" type="image/png" href="icon-192.png" />
   <title>富士食譜工具</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet" />
   <style>
@@ -196,11 +197,34 @@
     .shutter.go { animation: shutter .42s ease; }
     @keyframes rise { from { opacity: 0; transform: translateY(16px);} to { opacity: 1; transform: none;} }
     @keyframes ken { from { transform: scale(1.06);} to { transform: none;} }
+
+    .gate {
+      position:fixed; inset:0; z-index:80; background:rgba(22,19,17,.72);
+      display:none; place-items:center; padding:24px;
+    }
+    .gate.show { display:grid; }
+    .gate-card {
+      width:min(92vw,360px); background:var(--char); border-radius:18px;
+      padding:22px 18px; box-shadow:0 18px 40px rgba(0,0,0,.4);
+    }
+    .gate-card h2 { margin:0 0 8px; font-family:"Noto Serif JP",serif; font-size:18px; letter-spacing:.12em; }
+    .gate-card p { color:var(--muted); font-size:12px; line-height:1.6; margin:0 0 14px; }
+    .who { color:var(--muted); font-size:10px; max-width:72px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     @keyframes shutter { 0% {opacity:0} 18% {opacity:1} 100% {opacity:0} }
   </style>
 </head>
 <body>
   <div class="shutter" id="shutter"></div>
+  <div class="gate" id="gate">
+    <form class="gate-card" id="login-form">
+      <h2>共用食譜</h2>
+      <p>用你或你哥的 Email 登入後，兩邊會看到同一本食譜和照片。</p>
+      <label class="field">Email<input id="login-email" type="email" required autocomplete="username"></label>
+      <label class="field" style="margin-top:8px">密碼<input id="login-pass" type="password" required autocomplete="current-password"></label>
+      <p id="login-err" class="hint" style="color:#e6a3a3;min-height:1.2em;margin:8px 0"></p>
+      <button class="pbtn red full" type="submit">登入</button>
+    </form>
+  </div>
   <div class="app">
     <section id="list-screen" class="screen show">
       <header class="top">
@@ -216,6 +240,12 @@
             <rect x="2.6" y="2.6" width="12.8" height="12.2" fill="#2b2622"/>
           </svg>
         </a>
+        <button class="icon-btn" id="btn-auth" title="登入共用" aria-label="登入共用">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <circle cx="9" cy="6" r="3.1" fill="#f4eee4"/>
+            <path d="M3.2 15.2c.6-3.1 2.6-4.7 5.8-4.7s5.2 1.6 5.8 4.7" fill="#f4eee4"/>
+          </svg>
+        </button>
         <button class="icon-btn" id="btn-cam" title="相機" aria-label="相機">
           <svg width="22" height="18" viewBox="0 0 22 18" fill="none" aria-hidden="true">
             <rect x="1" y="4" width="20" height="13" rx="2" fill="#f4eee4"/>
@@ -374,6 +404,91 @@ function emptyRecipe(){
     highlight: "0", shadow: "0", color: "0", sharpness: "0", nr: "-4", clarity: "0",
     iso: "Auto 至 6400", ev: "", notes: "", photos: [], createdAt: Date.now(), updatedAt: Date.now()
   };
+}
+
+
+const SB_URL = "https://bqyxyghexwpstpfcjdue.supabase.co";
+const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXh5Z2hleHdwc3RwZmNqZHVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NTg0OTUsImV4cCI6MjEwNDMzNDQ5NX0.u0Kd9qLE1MA-ImQkr8-LSUhunwJyTkkBWAu4nmU1yKQ";
+const sb = window.supabase.createClient(SB_URL, SB_ANON);
+let cloudUser = null;
+
+function photoPath(rid, pid){ return rid + "/" + pid + ".jpg"; }
+
+async function uploadPhoto(rid, pid){
+  if(!cloudUser) return;
+  const blob = await getPhotoBlob(pid);
+  if(!blob) return;
+  const { error } = await sb.storage.from("photos").upload(photoPath(rid,pid), blob, { contentType:"image/jpeg", upsert:true });
+  if(error) console.warn("photo upload", error.message);
+}
+async function removeCloudPhoto(rid, pid){
+  if(!cloudUser) return;
+  await sb.storage.from("photos").remove([photoPath(rid,pid)]);
+}
+async function ensurePhotoLocal(rid, pid){
+  const have = await getPhotoBlob(pid);
+  if(have) return;
+  const { data, error } = await sb.storage.from("photos").download(photoPath(rid,pid));
+  if(error || !data) return;
+  await putPhoto(pid, data);
+}
+
+async function cloudUpsert(recipe){
+  if(!cloudUser || !recipe || recipe.id==="demo-gold") return;
+  const payload = {
+    title: recipe.name || "",
+    data: recipe,
+    updated_at: new Date().toISOString(),
+    updated_by: cloudUser.email || ""
+  };
+  const { data: rows, error: qerr } = await sb.from("recipes").select("id").filter("data->>id","eq", String(recipe.id)).limit(1);
+  if(qerr){ toast("雲端讀取失敗"); console.warn(qerr); return; }
+  if(rows && rows.length){
+    const { error } = await sb.from("recipes").update(payload).eq("id", rows[0].id);
+    if(error) toast("雲端更新失敗");
+  }else{
+    const { error } = await sb.from("recipes").insert(payload);
+    if(error) toast("雲端新增失敗");
+  }
+  for(const pid of (recipe.photos||[])) await uploadPhoto(recipe.id, pid);
+}
+async function cloudDelete(recipe){
+  if(!cloudUser || !recipe) return;
+  const { data: rows } = await sb.from("recipes").select("id").filter("data->>id","eq", String(recipe.id));
+  if(rows && rows.length) await sb.from("recipes").delete().eq("id", rows[0].id);
+  const paths = (recipe.photos||[]).map(pid => photoPath(recipe.id, pid));
+  if(paths.length) await sb.storage.from("photos").remove(paths);
+}
+async function cloudPull(){
+  const { data, error } = await sb.from("recipes").select("data").order("updated_at", { ascending:false });
+  if(error){ toast("同步失敗："+error.message); return false; }
+  const remote = (data||[]).map(x => migrateRecipe(x.data||x)).filter(r => r && r.id && r.id!=="demo-gold");
+  if(!remote.length){
+    const locals = state.recipes.filter(r => r.id!=="demo-gold");
+    for(const r of locals) await cloudUpsert(r);
+    toast(locals.length ? "已把本機食譜上傳到雲端" : "雲端還是空的，可以新增");
+    return true;
+  }
+  state.recipes = remote;
+  save();
+  for(const r of state.recipes){
+    for(const pid of (r.photos||[])) await ensurePhotoLocal(r.id, pid);
+  }
+  toast("已同步 "+state.recipes.length+" 道食譜");
+  return true;
+}
+
+async function afterLogin(session){
+  cloudUser = session && session.user ? session.user : null;
+  const btn = $("#btn-auth");
+  if(btn) btn.title = cloudUser ? ("已登入 "+(cloudUser.email||"")+"，點擊登出") : "登入共用";
+  if(!cloudUser){
+    $("#gate").classList.remove("show");
+    return;
+  }
+  $("#gate").classList.remove("show");
+  await cloudPull();
+  renderList();
 }
 
 function save(){ localStorage.setItem("fujiPixel.v1", JSON.stringify(state.recipes)); }
@@ -945,14 +1060,18 @@ $("#write-slot").onclick = async ()=>{
   try { await writeRecipeToSlot(r, Number($("#cam-slot").value)); shutter(); toast("寫入完成"); }
   catch(e){ logCam("寫入錯誤："+e.message); toast("寫入失敗"); }
 };
-$("#form").addEventListener("submit", e=>{
+$("#form").addEventListener("submit", async e=>{
   e.preventDefault();
   const data = readForm();
   if(!data.name) return toast("先取名字");
   const exist = state.recipes.find(r=>r.id===state.current);
   if(exist) Object.assign(exist, data, {photos:[...state.draftPhotos], updatedAt:Date.now()});
   else state.recipes.unshift({...emptyRecipe(), id:state.current, ...data, photos:[...state.draftPhotos]});
-  save(); shutter(); toast("已存檔"); renderDetail(state.current);
+  save();
+  const rec = state.recipes.find(r=>r.id===state.current);
+  toast("同步中…");
+  await cloudUpsert(rec);
+  shutter(); toast("已存檔"); renderDetail(state.current);
 });
 $("#form").addEventListener("click", async e=>{
   if(e.target.id==="addph") $("#photo-file").click();
@@ -980,7 +1099,10 @@ $("#detail").addEventListener("click", async e=>{
   if(e.target.id==="del-this"){
     if(!confirm("刪除這道食譜？")) return;
     const r=state.recipes.find(x=>x.id===state.current);
-    if(r) for(const id of r.photos) await delPhoto(id);
+    if(r){
+      for(const id of r.photos) await delPhoto(id);
+      await cloudDelete(r);
+    }
     state.recipes = state.recipes.filter(x=>x.id!==state.current);
     save(); toast("已刪除"); show("list"); renderList();
   }
@@ -1106,7 +1228,11 @@ async function importSettings(file){
       else state.recipes.unshift(r);
       n++;
     });
-    save(); shutter(); toast(`已匯入 ${n} 道食譜`);
+    save();
+    if(cloudUser){
+      for(const r of state.recipes) if(r.id!=="demo-gold") await cloudUpsert(r);
+    }
+    shutter(); toast(`已匯入 ${n} 道食譜`);
     renderList();
   }catch{ toast("匯入失敗，請確認 JSON"); }
 }
@@ -1116,7 +1242,37 @@ $("#import-file").addEventListener("change", e=>{
   const f = e.target.files[0]; e.target.value=""; if(f) importSettings(f);
 });
 
-load(); renderList();
+
+$("#login-form").addEventListener("submit", async e=>{
+  e.preventDefault();
+  $("#login-err").textContent = "";
+  const email=$("#login-email").value.trim();
+  const password=$("#login-pass").value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ $("#login-err").textContent = error.message==="Invalid login credentials" ? "帳號或密碼不對" : error.message; return; }
+});
+$("#btn-auth").onclick = async ()=>{
+  if(cloudUser){
+    if(confirm("登出後這台只留本機食譜，不再同步。")){
+      await sb.auth.signOut();
+      cloudUser = null;
+      location.reload();
+    }
+    return;
+  }
+  $("#gate").classList.add("show");
+};
+$("#gate").addEventListener("click", e=>{ if(e.target.id==="gate") $("#gate").classList.remove("show"); });
+sb.auth.onAuthStateChange((_evt, session)=>{
+  if(session && session.user) afterLogin(session);
+  else cloudUser = null;
+});
+
+load();
+renderList();
+sb.auth.getSession().then(({data})=>{
+  if(data && data.session) afterLogin(data.session);
+});
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js").catch(() => {});
 }
