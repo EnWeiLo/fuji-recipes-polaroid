@@ -71,6 +71,9 @@
       width:100%; border:0; background:var(--char); border-radius:12px; padding:11px 12px;
       box-shadow:inset 0 0 0 1px var(--line); outline:none;
     }
+    .field input[type="color"] {
+      height:52px; min-height:52px; padding:6px; border-radius:14px;
+    }
     .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
     .hint { color:var(--muted); font-size:12px; line-height:1.6; }
@@ -173,7 +176,6 @@
         <button class="on" data-side="left">左側</button>
         <button data-side="right">右側</button>
       </div>
-      <label class="field">日期顏色<input id="date-color" type="color" value="#2c261e"></label>
       <button class="pbtn ghost full" id="reset">重設文字位置</button>
       <button class="pbtn ghost full" id="reset-crop">重設裁切</button>
       <button class="pbtn red full" id="save">下載拍立得</button>
@@ -265,7 +267,7 @@ function applyStamp(){
   const text=($("#date-text").value||"").trim();
   el.textContent = text;
   el.className = "stamp " + (on && text ? dateSide : "off");
-  el.style.color = $("#date-color").value;
+  el.style.color = $("#color").value;
   el.style.top = datePos + "%";
 }
 function drawPreview(){
@@ -464,7 +466,7 @@ function exportCard(){
     const ds=($("#date-text").value||"").trim();
     const dsize=Math.round(photo.width*0.028);
     ctx.save();
-    ctx.fillStyle=$("#date-color").value;
+    ctx.fillStyle=$("#color").value;
     ctx.font="700 "+dsize+"px "+font;
     ctx.textAlign="left";
     ctx.textBaseline="top";
@@ -530,22 +532,39 @@ document.querySelectorAll("#date-sides button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("#date-sides button").forEach(x=>x.classList.toggle("on", x===b));
   applyStamp();
 });
-["date-on","date-text","date-color"].forEach(id=>$("#"+id).addEventListener("input", applyStamp));
+["date-on","date-text","color"].forEach(id=>$("#"+id).addEventListener("input", applyStamp));
 $("#date-on").addEventListener("change", applyStamp);
 $("#reset").onclick=()=>{ pos={left:6,right:6}; applyPos(); };
 $("#reset-crop").onclick=()=>{ crop={z:1,x:0,y:0}; drawPreview(); };
 $("#save").onclick=exportCard;
 (function bindCrop(){
   const c=$("#photo");
-  let dragging=false, sx=0, sy=0, ox=0, oy=0;
+  let dragging=false, pinching=false, sx=0, sy=0, ox=0, oy=0, startZ=1, startDist=0;
   const pt=e=> e.touches?e.touches[0]:e;
+  const dist=e=>{
+    const a=e.touches[0], b=e.touches[1];
+    const dx=a.clientX-b.clientX, dy=a.clientY-b.clientY;
+    return Math.hypot(dx,dy);
+  };
   const down=e=>{
     if(!source) return;
     e.preventDefault();
-    dragging=true; c.style.cursor="grabbing";
+    if(e.touches && e.touches.length>=2){
+      pinching=true; dragging=false;
+      startDist=dist(e); startZ=crop.z;
+      return;
+    }
+    dragging=true; pinching=false; c.style.cursor="grabbing";
     sx=pt(e).clientX; sy=pt(e).clientY; ox=crop.x; oy=crop.y;
   };
   const move=e=>{
+    if(pinching && e.touches && e.touches.length>=2){
+      e.preventDefault();
+      const d=dist(e);
+      crop.z=Math.max(1, Math.min(4, startZ*(d/Math.max(1,startDist))));
+      drawPreview();
+      return;
+    }
     if(!dragging) return;
     const box=c.getBoundingClientRect();
     const k=c.width/box.width;
@@ -553,7 +572,7 @@ $("#save").onclick=exportCard;
     crop.y=oy+(pt(e).clientY-sy)*k;
     drawPreview();
   };
-  const up=()=>{ dragging=false; c.style.cursor="grab"; };
+  const up=()=>{ dragging=false; pinching=false; c.style.cursor="grab"; };
   c.addEventListener("mousedown", down);
   window.addEventListener("mousemove", move);
   window.addEventListener("mouseup", up);
