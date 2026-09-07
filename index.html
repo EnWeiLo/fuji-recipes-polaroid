@@ -219,9 +219,8 @@
     <form class="gate-card" id="login-form">
       <h2>共用食譜</h2>
       <label class="field">Email<input id="login-email" type="email" required autocomplete="username"></label>
-      <label class="field" style="margin-top:8px">密碼<input id="login-pass" type="password" required autocomplete="current-password"></label>
       <p id="login-err" class="hint" style="color:#e6a3a3;min-height:1.2em;margin:8px 0"></p>
-      <button class="pbtn red full" type="submit">登入</button>
+      <button class="pbtn red full" type="submit">寄出</button>
     </form>
   </div>
   <div class="app">
@@ -414,11 +413,15 @@ let cloudUser = null;
 function photoPath(rid, pid){ return rid + "/" + pid + ".jpg"; }
 
 async function uploadPhoto(rid, pid){
-  if(!cloudUser) return;
+  if(!cloudUser) return false;
   const blob = await getPhotoBlob(pid);
-  if(!blob) return;
+  if(!blob) return false;
   const { error } = await sb.storage.from("photos").upload(photoPath(rid,pid), blob, { contentType:"image/jpeg", upsert:true });
-  if(error) console.warn("photo upload", error.message);
+  if(error){
+    toast("照片上傳失敗："+error.message);
+    return false;
+  }
+  return true;
 }
 async function removeCloudPhoto(rid, pid){
   if(!cloudUser) return;
@@ -426,10 +429,11 @@ async function removeCloudPhoto(rid, pid){
 }
 async function ensurePhotoLocal(rid, pid){
   const have = await getPhotoBlob(pid);
-  if(have) return;
+  if(have) return true;
   const { data, error } = await sb.storage.from("photos").download(photoPath(rid,pid));
-  if(error || !data) return;
+  if(error || !data) return false;
   await putPhoto(pid, data);
+  return true;
 }
 
 async function cloudUpsert(recipe){
@@ -449,7 +453,11 @@ async function cloudUpsert(recipe){
     const { error } = await sb.from("recipes").insert(payload);
     if(error) toast("雲端新增失敗");
   }
-  for(const pid of (recipe.photos||[])) await uploadPhoto(recipe.id, pid);
+  let ok=0, fail=0;
+  for(const pid of (recipe.photos||[])){
+    if(await uploadPhoto(recipe.id, pid)) ok++; else if(pid) fail++;
+  }
+  if((recipe.photos||[]).length && fail) toast("有 "+fail+" 張照片沒傳到雲端");
 }
 async function cloudDelete(recipe){
   if(!cloudUser || !recipe) return;
@@ -470,10 +478,13 @@ async function cloudPull(){
   }
   state.recipes = remote;
   save();
+  let missing=0;
   for(const r of state.recipes){
-    for(const pid of (r.photos||[])) await ensurePhotoLocal(r.id, pid);
+    for(const pid of (r.photos||[])){
+      if(!(await ensurePhotoLocal(r.id, pid))) missing++;
+    }
   }
-  toast("已同步 "+state.recipes.length+" 道食譜");
+  toast("已同步 "+state.recipes.length+" 道食譜"+(missing?"，缺 "+missing+" 張圖":""));
   return true;
 }
 
@@ -1082,8 +1093,10 @@ $("#form").addEventListener("click", async e=>{
 $("#photo-file").addEventListener("change", async e=>{
   const files=[...e.target.files]; e.target.value="";
   for(const f of files.slice(0,6)){
-    try{ const blob=await compressImage(f); const id="p_"+uid(); await putPhoto(id,blob); state.draftPhotos.push(id); }
-    catch{ toast("照片失敗"); }
+    try{
+      const blob=await compressImage(f); const id="p_"+uid(); await putPhoto(id,blob); state.draftPhotos.push(id);
+      if(cloudUser && state.current) await uploadPhoto(state.current, id);
+    }catch{ toast("照片失敗"); }
   }
   renderThumbs();
 });
@@ -1246,9 +1259,17 @@ $("#login-form").addEventListener("submit", async e=>{
   e.preventDefault();
   $("#login-err").textContent = "";
   const email=$("#login-email").value.trim();
-  const password=$("#login-pass").value;
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(error){ $("#login-err").textContent = error.message==="Invalid login credentials" ? "帳號或密碼不對" : error.message; return; }
+  const redirectTo = new URL("./", location.href).href;
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: redirectTo, shouldCreateUser: false }
+  });
+  if(error){
+    $("#login-err").textContent = error.message;
+    return;
+  }
+  $("#login-err").style.color = "#c8bfb3";
+  $("#login-err").textContent = "已寄出";
 });
 $("#btn-auth").onclick = async ()=>{
   if(cloudUser){
