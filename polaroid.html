@@ -82,8 +82,8 @@
     .ratios button.on, .sides button.on { outline:2px solid #e60012; }
     .sides { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .stamp {
-      position:absolute; top:10%; writing-mode:vertical-rl; letter-spacing:.18em;
-      font-size:11px; pointer-events:none; font-weight:700;
+      position:absolute; top:18%; writing-mode:vertical-rl; letter-spacing:.18em;
+      font-size:11px; font-weight:700; cursor:grab; touch-action:none; user-select:none;
     }
     .stamp.left { left:1.6%; }
     .stamp.right { right:1.6%; }
@@ -162,18 +162,18 @@
         </label>
         <label class="field">顏色<input id="color" type="color" value="#2c261e"></label>
       </div>
-      <label class="field" style="display:flex;align-items:center;gap:10px;color:var(--cream)">
-        <input id="date-on" type="checkbox"> 日期戳
+      <label class="field">日期戳
+        <select id="date-on">
+          <option value="off">關</option>
+          <option value="on">開</option>
+        </select>
       </label>
       <label class="field">日期<input id="date-text" placeholder="2026.09.07"></label>
       <div class="sides" id="date-sides">
         <button class="on" data-side="left">左側</button>
         <button data-side="right">右側</button>
       </div>
-      <div class="row2">
-        <label class="field">日期顏色<input id="date-color" type="color" value="#2c261e"></label>
-        <label class="field">日期位置<input id="date-pos" type="range" min="8" max="80" value="18"></label>
-      </div>
+      <label class="field">日期顏色<input id="date-color" type="color" value="#2c261e"></label>
       <button class="pbtn ghost full" id="reset">重設文字位置</button>
       <button class="pbtn ghost full" id="reset-crop">重設裁切</button>
       <button class="pbtn red full" id="save">下載拍立得</button>
@@ -195,6 +195,7 @@ let pos = { left: 6, right: 6 };
 let aspect = "orig";
 let crop = { z:1, x:0, y:0 };
 let dateSide = "left";
+let datePos = 18;
 
 function applyType(){
   const font = FONTS[$("#font").value] || FONTS.sans;
@@ -260,12 +261,12 @@ function coverRect(w,h){
 }
 function applyStamp(){
   const el=$("#stamp");
-  const on=$("#date-on").checked;
+  const on=$("#date-on").value==="on";
   const text=($("#date-text").value||"").trim();
   el.textContent = text;
   el.className = "stamp " + (on && text ? dateSide : "off");
   el.style.color = $("#date-color").value;
-  el.style.top = $("#date-pos").value + "%";
+  el.style.top = datePos + "%";
 }
 function drawPreview(){
   const c = $("#photo");
@@ -418,7 +419,7 @@ function exportCard(){
   if(!source){ alert("先上傳照片"); return; }
   drawPreview();
   const photo = $("#photo");
-  const dateOn = $("#date-on").checked && ($("#date-text").value||"").trim();
+  const dateOn = $("#date-on").value==="on" && ($("#date-text").value||"").trim();
   const side = Math.round(photo.width * (dateOn ? 0.09 : 0.046));
   const bottom = Math.round(photo.width * 0.22);
   const w = photo.width + side*2;
@@ -467,7 +468,7 @@ function exportCard(){
     ctx.font="700 "+dsize+"px "+font;
     ctx.textAlign="left";
     ctx.textBaseline="top";
-    const along = (Number($("#date-pos").value)||18)/100;
+    const along = datePos/100;
     const tx = dateSide==="left" ? Math.round(side*0.28) : w-Math.round(side*0.72);
     const ty = side + photo.height*along;
     ctx.translate(tx, ty);
@@ -529,7 +530,8 @@ document.querySelectorAll("#date-sides button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("#date-sides button").forEach(x=>x.classList.toggle("on", x===b));
   applyStamp();
 });
-["date-on","date-text","date-color","date-pos"].forEach(id=>$("#"+id).addEventListener("input", applyStamp));
+["date-on","date-text","date-color"].forEach(id=>$("#"+id).addEventListener("input", applyStamp));
+$("#date-on").addEventListener("change", applyStamp);
 $("#reset").onclick=()=>{ pos={left:6,right:6}; applyPos(); };
 $("#reset-crop").onclick=()=>{ crop={z:1,x:0,y:0}; drawPreview(); };
 $("#save").onclick=exportCard;
@@ -564,6 +566,31 @@ $("#save").onclick=exportCard;
     crop.z = Math.max(1, Math.min(4, crop.z + (e.deltaY<0?0.08:-0.08)));
     drawPreview();
   }, {passive:false});
+})();
+
+(function bindStamp(){
+  const el=$("#stamp");
+  let dragging=false, sy=0, start=18;
+  const pt=e=>e.touches?e.touches[0]:e;
+  const down=e=>{
+    if(el.classList.contains("off")) return;
+    e.preventDefault(); e.stopPropagation();
+    dragging=true; el.style.cursor="grabbing";
+    sy=pt(e).clientY; start=datePos;
+  };
+  const move=e=>{
+    if(!dragging) return;
+    const box=$("#frame").getBoundingClientRect();
+    datePos = Math.max(6, Math.min(78, start + ((pt(e).clientY-sy)/box.height)*100));
+    applyStamp();
+  };
+  const up=()=>{ dragging=false; el.style.cursor="grab"; };
+  el.addEventListener("mousedown", down);
+  el.addEventListener("touchstart", down, {passive:false});
+  window.addEventListener("mousemove", move);
+  window.addEventListener("mouseup", up);
+  window.addEventListener("touchmove", move, {passive:false});
+  window.addEventListener("touchend", up);
 })();
 bindDrag($("#boxL"),"left");
 bindDrag($("#boxR"),"right");
