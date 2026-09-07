@@ -74,6 +74,21 @@
     .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
     .hint { color:var(--muted); font-size:12px; line-height:1.6; }
+    .ratios { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:10px 0; }
+    .ratios button, .sides button {
+      border:0; min-height:42px; border-radius:12px; font-weight:700; font-size:13px;
+      background:var(--char); color:var(--cream); box-shadow:inset 0 0 0 1px var(--line);
+    }
+    .ratios button.on, .sides button.on { outline:2px solid #e60012; }
+    .sides { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .stamp {
+      position:absolute; top:10%; writing-mode:vertical-rl; letter-spacing:.18em;
+      font-size:11px; pointer-events:none; font-weight:700;
+    }
+    .stamp.left { left:1.6%; }
+    .stamp.right { right:1.6%; }
+    .stamp.off { display:none; }
+    #photo { cursor:grab; touch-action:none; }
     .frames { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
     .frames button { border:0; min-height:42px; border-radius:12px; font-weight:700; font-size:13px; }
     .frames .w { background:#f7f3ec; color:#2a2218; }
@@ -103,8 +118,15 @@
       <button class="k" data-frame="black">黑框</button>
       <button class="t" data-frame="tint">取色半透明</button>
     </div>
+    <div class="ratios" id="ratios">
+      <button class="on" data-aspect="orig">原圖</button>
+      <button data-aspect="mini">Mini</button>
+      <button data-aspect="square">方框</button>
+      <button data-aspect="wide">Wide</button>
+    </div>
     <div class="stage">
       <div class="polaroid white" id="frame">
+        <div class="stamp off" id="stamp"></div>
         <div class="pad"><canvas id="photo" width="1200" height="900"></canvas></div>
         <div class="caption" id="caption">
           <div class="txt left" id="boxL" data-side="left"><b id="t-cam">相機</b><span id="t-lens">鏡頭</span></div>
@@ -140,10 +162,23 @@
         </label>
         <label class="field">顏色<input id="color" type="color" value="#2c261e"></label>
       </div>
+      <label class="field" style="display:flex;align-items:center;gap:10px;color:var(--cream)">
+        <input id="date-on" type="checkbox"> 日期戳
+      </label>
+      <label class="field">日期<input id="date-text" placeholder="2026.09.07"></label>
+      <div class="sides" id="date-sides">
+        <button class="on" data-side="left">左側</button>
+        <button data-side="right">右側</button>
+      </div>
+      <div class="row2">
+        <label class="field">日期顏色<input id="date-color" type="color" value="#2c261e"></label>
+        <label class="field">日期位置<input id="date-pos" type="range" min="8" max="80" value="18"></label>
+      </div>
       <button class="pbtn ghost full" id="reset">重設文字位置</button>
+      <button class="pbtn ghost full" id="reset-crop">重設裁切</button>
       <button class="pbtn red full" id="save">下載拍立得</button>
     </div>
-    <p class="hint">底邊兩塊字可左右拖。白框／黑框／取色半透明可切換。直式照片不再被轉成橫的。</p>
+    <p class="hint">拖動照片調整裁切，電腦可用滾輪縮放。日期為直書，可關、可改色與上下位置。</p>
   </div>
 <script>
 const $ = s => document.querySelector(s);
@@ -157,6 +192,9 @@ let source = null;
 let frameStyle = "white";
 let tint = "rgba(120,90,70,.55)";
 let pos = { left: 6, right: 6 };
+let aspect = "orig";
+let crop = { z:1, x:0, y:0 };
+let dateSide = "left";
 
 function applyType(){
   const font = FONTS[$("#font").value] || FONTS.sans;
@@ -199,21 +237,52 @@ function setFrame(name){
   applyType();
 }
 
+function winSize(){
+  if(!source) return {w:1200,h:900};
+  let r = source.width/source.height;
+  if(aspect==="mini") r=2/3;
+  else if(aspect==="square") r=1;
+  else if(aspect==="wide") r=3/2;
+  const max=1600;
+  if(r>=1) return {w:max, h:Math.max(1,Math.round(max/r))};
+  return {w:Math.max(1,Math.round(max*r)), h:max};
+}
+function coverRect(w,h){
+  const sw=source.width, sh=source.height;
+  const base=Math.max(w/sw, h/sh);
+  const s=base*Math.max(1, crop.z);
+  const dw=sw*s, dh=sh*s;
+  let x=(w-dw)/2+crop.x;
+  let y=(h-dh)/2+crop.y;
+  if(dw>=w) x=Math.min(0, Math.max(w-dw, x)); else x=(w-dw)/2;
+  if(dh>=h) y=Math.min(0, Math.max(h-dh, y)); else y=(h-dh)/2;
+  return {x,y,dw,dh};
+}
+function applyStamp(){
+  const el=$("#stamp");
+  const on=$("#date-on").checked;
+  const text=($("#date-text").value||"").trim();
+  el.textContent = text;
+  el.className = "stamp " + (on && text ? dateSide : "off");
+  el.style.color = $("#date-color").value;
+  el.style.top = $("#date-pos").value + "%";
+}
 function drawPreview(){
   const c = $("#photo");
   const ctx = c.getContext("2d");
   if(!source){
     c.width = 1200; c.height = 900;
     ctx.fillStyle = "#cfc6b8"; ctx.fillRect(0,0,c.width,c.height);
+    applyStamp();
     return;
   }
-  const w = source.width, h = source.height;
-  const max = 1600;
-  const scale = Math.min(1, max / Math.max(w,h));
-  c.width = Math.round(w*scale);
-  c.height = Math.round(h*scale);
-  ctx.drawImage(source, 0, 0, c.width, c.height);
-  sampleTint(ctx, c.width, c.height);
+  const {w,h}=winSize();
+  c.width=w; c.height=h;
+  ctx.fillStyle="#222"; ctx.fillRect(0,0,w,h);
+  const r=coverRect(w,h);
+  ctx.drawImage(source, r.x, r.y, r.dw, r.dh);
+  sampleTint(ctx, w, h);
+  applyStamp();
 }
 
 function sampleTint(ctx, w, h){
@@ -307,7 +376,8 @@ function parseTiff(buf, start){
     lens: exif[0xA434]||"",
     iso: exif[0x8827]||exif[0x8833]||"",
     fnum: exif[0x829D]||"",
-    shut: exif[0x829A]||""
+    shut: exif[0x829A]||"",
+    date: exif[0x9003]||exif[0x9004]||ifd0[0x0132]||""
   };
 }
 
@@ -320,6 +390,11 @@ async function loadFile(file){
   $("#iso").value = meta.iso ? String(meta.iso) : "";
   $("#fnum").value = fmtF(Number(meta.fnum));
   $("#shut").value = typeof meta.shut==="number" ? fmtShutter(meta.shut) : "";
+  if(meta.date){
+    const m=String(meta.date).match(/(\d{4}).(\d{2}).(\d{2})/);
+    if(m) $("#date-text").value=m[1]+"."+m[2]+"."+m[3];
+  }
+  crop={z:1,x:0,y:0};
   fillText();
   const blob = new Blob([buf], { type: file.type || "image/jpeg" });
   try{
@@ -341,8 +416,10 @@ async function loadFile(file){
 
 function exportCard(){
   if(!source){ alert("先上傳照片"); return; }
+  drawPreview();
   const photo = $("#photo");
-  const side = Math.round(photo.width * 0.046);
+  const dateOn = $("#date-on").checked && ($("#date-text").value||"").trim();
+  const side = Math.round(photo.width * (dateOn ? 0.09 : 0.046));
   const bottom = Math.round(photo.width * 0.22);
   const w = photo.width + side*2;
   const h = photo.height + side + bottom;
@@ -382,6 +459,22 @@ function exportCard(){
   ctx.textAlign="right";
   ctx.font = "700 "+size+"px "+font;
   ctx.fillText([iso && ("ISO "+iso.replace(/^ISO\s*/i,"")), fnum, shut].filter(Boolean).join("   "), rightX, y+8);
+  if(dateOn){
+    const ds=($("#date-text").value||"").trim();
+    const dsize=Math.round(photo.width*0.028);
+    ctx.save();
+    ctx.fillStyle=$("#date-color").value;
+    ctx.font="700 "+dsize+"px "+font;
+    ctx.textAlign="left";
+    ctx.textBaseline="top";
+    const along = (Number($("#date-pos").value)||18)/100;
+    const tx = dateSide==="left" ? Math.round(side*0.28) : w-Math.round(side*0.72);
+    const ty = side + photo.height*along;
+    ctx.translate(tx, ty);
+    ctx.rotate(Math.PI/2);
+    ctx.fillText(ds, 0, 0);
+    ctx.restore();
+  }
   flash();
   out.toBlob(function(b){
     const a=document.createElement("a");
@@ -426,8 +519,52 @@ $("#file").addEventListener("change", e=>{
 ["cam","lens","iso","fnum","shut"].forEach(id => $("#"+id).addEventListener("input", fillText));
 ["font","size","color"].forEach(id => $("#"+id).addEventListener("input", applyType));
 document.querySelectorAll(".frames button").forEach(b=>b.onclick=()=>setFrame(b.dataset.frame));
+document.querySelectorAll("#ratios button").forEach(b=>b.onclick=()=>{
+  aspect=b.dataset.aspect;
+  document.querySelectorAll("#ratios button").forEach(x=>x.classList.toggle("on", x===b));
+  crop={z:1,x:0,y:0}; drawPreview();
+});
+document.querySelectorAll("#date-sides button").forEach(b=>b.onclick=()=>{
+  dateSide=b.dataset.side;
+  document.querySelectorAll("#date-sides button").forEach(x=>x.classList.toggle("on", x===b));
+  applyStamp();
+});
+["date-on","date-text","date-color","date-pos"].forEach(id=>$("#"+id).addEventListener("input", applyStamp));
 $("#reset").onclick=()=>{ pos={left:6,right:6}; applyPos(); };
+$("#reset-crop").onclick=()=>{ crop={z:1,x:0,y:0}; drawPreview(); };
 $("#save").onclick=exportCard;
+(function bindCrop(){
+  const c=$("#photo");
+  let dragging=false, sx=0, sy=0, ox=0, oy=0;
+  const pt=e=> e.touches?e.touches[0]:e;
+  const down=e=>{
+    if(!source) return;
+    e.preventDefault();
+    dragging=true; c.style.cursor="grabbing";
+    sx=pt(e).clientX; sy=pt(e).clientY; ox=crop.x; oy=crop.y;
+  };
+  const move=e=>{
+    if(!dragging) return;
+    const box=c.getBoundingClientRect();
+    const k=c.width/box.width;
+    crop.x=ox+(pt(e).clientX-sx)*k;
+    crop.y=oy+(pt(e).clientY-sy)*k;
+    drawPreview();
+  };
+  const up=()=>{ dragging=false; c.style.cursor="grab"; };
+  c.addEventListener("mousedown", down);
+  window.addEventListener("mousemove", move);
+  window.addEventListener("mouseup", up);
+  c.addEventListener("touchstart", down, {passive:false});
+  window.addEventListener("touchmove", move, {passive:false});
+  window.addEventListener("touchend", up);
+  c.addEventListener("wheel", e=>{
+    if(!source) return;
+    e.preventDefault();
+    crop.z = Math.max(1, Math.min(4, crop.z + (e.deltaY<0?0.08:-0.08)));
+    drawPreview();
+  }, {passive:false});
+})();
 bindDrag($("#boxL"),"left");
 bindDrag($("#boxR"),"right");
 applyType(); applyPos(); drawPreview();
