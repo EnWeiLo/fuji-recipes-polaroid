@@ -1,4 +1,4 @@
-const CACHE = "fuji-recipe-v12";
+const CACHE = "fuji-recipe-v13";
 const PRECACHE = ["./","index.html","polaroid.html","manifest.webmanifest","icon-192.png","icon-512.png"];
 
 self.addEventListener("install", event => {
