@@ -8,7 +8,8 @@
   <link rel="icon" type="image/png" href="icon-192.png" />
   <title>拍立得 · 富士食譜工具</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Noto+Sans+TC:wght@400;600;700&family=Noto+Serif+JP:wght@600&family=Noto+Serif+TC:wght@600&family=Share+Tech+Mono&family=Zen+MaruGothic:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Noto+Sans+TC:wght@400;600;700&family=Noto+Serif+JP:wght@600&family=Noto+Serif+TC:wght@600;700&family=Share+Tech+Mono&family=Zen+MaruGothic:wght@500;700&family=Kiwi+Maru:wght@500&family=Yuji+Syuku&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root {
       --sumi:#161311; --char:#2b2622; --paper:#f4eee4; --ink:#2a2218;
@@ -17,7 +18,7 @@
     }
     * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
     html,body { margin:0; background:#161311; color:var(--cream); font-family:"Noto Sans TC",sans-serif; }
-    button,input,select { font:inherit; color:inherit; }
+    button,input,select,textarea { font:inherit; color:inherit; }
     button { cursor:pointer; }
     .top {
       position:sticky; top:0; z-index:10;
@@ -31,11 +32,11 @@
     .pbtn {
       border:0; min-height:40px; padding:0 14px; border-radius:999px;
       background:var(--paper); color:var(--ink); font-weight:700; text-decoration:none;
-      display:inline-grid; place-items:center;
+      display:inline-grid; place-items:center; text-align:center;
     }
     .pbtn.red { background:var(--fuji); color:#fff; }
     .pbtn.ghost { background:transparent; color:var(--cream); box-shadow:inset 0 0 0 1px var(--line); }
-    .pbtn.full { width:100%; }
+    .pbtn.full { width:100%; margin-top:6px; }
     .wrap { padding:16px; max-width:760px; margin:0 auto; padding-bottom:calc(32px + var(--safe-b)); }
     .pick {
       position:relative; display:grid; place-items:center;
@@ -47,6 +48,15 @@
       position:absolute; inset:0; width:100%; height:100%;
       opacity:0; margin:0; cursor:pointer; font-size:16px;
     }
+    .thumb-list {
+      display:flex; gap:10px; overflow-x:auto; padding:8px 0; margin-bottom:10px;
+    }
+    .thumb-item {
+      width:64px; height:64px; border-radius:8px; border:2px solid transparent;
+      overflow:hidden; cursor:pointer; flex-shrink:0; position:relative; background:#222;
+    }
+    .thumb-item img { width:100%; height:100%; object-fit:cover; }
+    .thumb-item.active { border-color:var(--fuji); }
     .stage { display:grid; place-items:center; margin:8px 0 16px; }
     .polaroid-container {
       width:min(90vw, 440px);
@@ -72,7 +82,7 @@
     }
     .form { display:grid; gap:10px; }
     label.field { display:grid; gap:6px; font-size:12px; color:var(--muted); }
-    .field input,.field select {
+    .field input,.field select,.field textarea {
       width:100%; border:0; background:var(--char); border-radius:12px; padding:11px 12px;
       box-shadow:inset 0 0 0 1px var(--line); outline:none;
     }
@@ -89,11 +99,13 @@
     }
     .ratios button.on, .sides button.on { outline:2px solid #e60012; }
     .sides { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .frames { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-    .frames button { border:0; min-height:42px; border-radius:12px; font-weight:700; font-size:13px; }
+    .frames { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+    .frames button { border:0; min-height:42px; border-radius:10px; font-weight:700; font-size:12px; padding:2px; }
     .frames .w { background:#f7f3ec; color:#2a2218; }
     .frames .k { background:#111; color:#f6efe4; box-shadow:inset 0 0 0 1px #444; }
     .frames .t { background:linear-gradient(90deg,#8a6a4a,#5a4032); color:#fff; }
+    .frames .v { background:#e8dfcb; color:#4a3b2c; border:1px dashed #a89f8b; }
+    .frames .f { background:#0d0d0d; color:#e09f3e; border:1px solid #e09f3e; }
     .frames button.on { outline:2px solid #e60012; }
     .shutter { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:40; }
     .shutter.go { animation:flash .42s ease; }
@@ -108,44 +120,69 @@
     <div class="brand"><h1>拍立得</h1></div>
   </header>
   <div class="wrap">
-    <label class="pick">選擇照片
-      <input id="file" type="file" accept="image/jpeg,image/png,image/heic,image/heif,image/*" />
+    <label class="pick">選擇照片 (最多 5 張)
+      <input id="file" type="file" multiple accept="image/jpeg,image/png,image/heic,image/heif,image/*" />
     </label>
-    <p class="hint">iPhone 選圖後若有「加入／完成」請按下去。建議相機 JPEG。</p>
+    
+    <!-- 批量圖片選擇縮圖列 -->
+    <div class="thumb-list" id="thumbList" style="display:none;"></div>
+
+    <p class="hint">iPhone 選圖後若有「加入／完成」請按下去。可一次選最多 5 張相片切換編輯。</p>
+    
     <div class="frames">
       <button class="w on" data-frame="white">白框</button>
       <button class="k" data-frame="black">黑框</button>
       <button class="t" data-frame="tint">取色半透明</button>
+      <button class="v" data-frame="vintage">復古黃紙</button>
+      <button class="f" data-frame="film">經典底片</button>
     </div>
+    
     <div class="ratios" id="ratios">
       <button class="on" data-aspect="orig">原圖</button>
       <button data-aspect="mini">Mini</button>
       <button data-aspect="square">方框</button>
       <button data-aspect="wide">Wide</button>
     </div>
+    
     <div class="stage">
       <div class="polaroid-container">
         <canvas id="mainCanvas"></canvas>
       </div>
     </div>
+    
     <div class="form">
       <div class="row2">
+        <label class="field">顯示 EXIF 參數
+          <select id="show-exif">
+            <option value="on" selected>開</option>
+            <option value="off">關</option>
+          </select>
+        </label>
+        <label class="field">自訂備註 / 標題
+          <input id="note-text" placeholder="輸入隨想或地點...">
+        </label>
+      </div>
+
+      <div class="row2" id="exif-row-1">
         <label class="field">相機<input id="cam" placeholder="X-T50"></label>
         <label class="field">鏡頭<input id="lens" placeholder="XF35mmF1.4 R"></label>
       </div>
-      <div class="row2">
+      <div class="row2" id="exif-row-2">
         <label class="field">ISO<input id="iso" placeholder="400"></label>
         <label class="field">光圈<input id="fnum" placeholder="f/1.4"></label>
       </div>
-      <label class="field">快門<input id="shut" placeholder="1/250"></label>
+      <label class="field" id="exif-row-3">快門<input id="shut" placeholder="1/250"></label>
+      
       <div class="row3">
         <label class="field">字型
           <select id="font">
-            <option value="sans">無襯線</option>
-            <option value="serif">襯線</option>
-            <option value="mono">等寬</option>
-            <option value="hand">手寫</option>
-            <option value="round">圓體</option>
+            <option value="sans">無襯線 (Noto Sans)</option>
+            <option value="serif">經典明體 (Noto Serif)</option>
+            <option value="mono">等寬數字 (Mono)</option>
+            <option value="hand">手寫英文 (Caveat)</option>
+            <option value="round">圓體 (Zen Maru)</option>
+            <option value="kiwi">溫潤明體 (Kiwi Maru)</option>
+            <option value="yuji">懷舊墨楷 (Yuji Syuku)</option>
           </select>
         </label>
         <label class="field">大小
@@ -158,6 +195,7 @@
         </label>
         <label class="field">顏色<input id="color" type="color" value="#2c261e"></label>
       </div>
+      
       <div class="row2">
         <label class="field">日期戳
           <select id="date-on">
@@ -174,14 +212,17 @@
           </select>
         </label>
       </div>
+      
       <label class="field">日期<input id="date-text" placeholder="2026.09.07"></label>
       <div class="sides" id="date-sides">
         <button class="on" data-side="left">左側</button>
         <button data-side="right">右側</button>
       </div>
+      
       <button class="pbtn ghost full" id="reset">重設文字位置</button>
       <button class="pbtn ghost full" id="reset-crop">重設裁切</button>
-      <button class="pbtn red full" id="save">下載拍立得</button>
+      <button class="pbtn red full" id="save">下載當前拍立得</button>
+      <button class="pbtn ghost full" id="save-all" style="display:none;">打包下載全部 (ZIP/批量)</button>
     </div>
     <p class="hint">拖動照片調整裁切，電腦可用滾輪縮放。可直接在畫面上拖動文字與日期位置。</p>
   </div>
@@ -250,44 +291,98 @@ const FONTS = {
   serif: '"Noto Serif TC", "Noto Serif JP", serif',
   mono: '"Share Tech Mono", monospace',
   hand: '"Caveat", cursive',
-  round: '"Zen Maru Gothic", sans-serif'
+  round: '"Zen Maru Gothic", sans-serif',
+  kiwi: '"Kiwi Maru", serif',
+  yuji: '"Yuji Syuku", serif'
 };
 
-// 狀態管理
-let source = null;
-let frameStyle = "white";
-let tintColor = "rgba(120,90,70,0.58)";
-let aspect = "orig";
-let crop = { z: 1, x: 0, y: 0 };
-let pos = { left: 6, right: 6 };
-let dateSide = "left";
-let datePos = 18;
+// 批量管理狀態
+let itemsList = []; 
+let currentIndex = 0;
+
+// 單張狀態快照數據結構
+function createDefaultItemState() {
+  return {
+    source: null,
+    thumbUrl: '',
+    frameStyle: "white",
+    tintColor: "rgba(120,90,70,0.58)",
+    aspect: "orig",
+    crop: { z: 1, x: 0, y: 0 },
+    pos: { left: 6, right: 6 },
+    dateSide: "left",
+    datePos: 18,
+    cam: "", lens: "", iso: "", fnum: "", shut: "", dateText: "",
+    noteText: "", showExif: "on"
+  };
+}
+
+let activeState = createDefaultItemState();
+
+function syncStateFromUI() {
+  if (!activeState) return;
+  activeState.cam = $("#cam").value;
+  activeState.lens = $("#lens").value;
+  activeState.iso = $("#iso").value;
+  activeState.fnum = $("#fnum").value;
+  activeState.shut = $("#shut").value;
+  activeState.dateText = $("#date-text").value;
+  activeState.noteText = $("#note-text").value;
+  activeState.showExif = $("#show-exif").value;
+}
+
+function syncUIFromState() {
+  if (!activeState) return;
+  $("#cam").value = activeState.cam || "";
+  $("#lens").value = activeState.lens || "";
+  $("#iso").value = activeState.iso || "";
+  $("#fnum").value = activeState.fnum || "";
+  $("#shut").value = activeState.shut || "";
+  $("#date-text").value = activeState.dateText || "";
+  $("#note-text").value = activeState.noteText || "";
+  $("#show-exif").value = activeState.showExif || "on";
+
+  // 按鈕狀態 toggle
+  document.querySelectorAll(".frames button").forEach(x => x.classList.toggle("on", x.dataset.frame === activeState.frameStyle));
+  document.querySelectorAll("#ratios button").forEach(x => x.classList.toggle("on", x.dataset.aspect === activeState.aspect));
+  document.querySelectorAll("#date-sides button").forEach(x => x.classList.toggle("on", x.dataset.side === activeState.dateSide));
+  
+  toggleExifInputs();
+}
+
+function toggleExifInputs() {
+  const show = $("#show-exif").value === "on";
+  $("#exif-row-1").style.display = show ? "grid" : "none";
+  $("#exif-row-2").style.display = show ? "grid" : "none";
+  $("#exif-row-3").style.display = show ? "grid" : "none";
+}
 
 function getTargetPhotoSize() {
-  if (!source) return { w: 1400, h: 1050 };
-  let r = source.width / source.height;
-  if (aspect === "mini") r = 2 / 3;
-  else if (aspect === "square") r = 1;
-  else if (aspect === "wide") r = 3 / 2;
+  if (!activeState.source) return { w: 1400, h: 1050 };
+  let r = activeState.source.width / activeState.source.height;
+  if (activeState.aspect === "mini") r = 2 / 3;
+  else if (activeState.aspect === "square") r = 1;
+  else if (activeState.aspect === "wide") r = 3 / 2;
   
   const w = 1400;
   return { w, h: Math.round(w / r) };
 }
 
 function coverRect(w, h) {
-  if (!source) return { x:0, y:0, dw:w, dh:h };
-  const sw = source.width, sh = source.height;
+  if (!activeState.source) return { x:0, y:0, dw:w, dh:h };
+  const sw = activeState.source.width, sh = activeState.source.height;
   const base = Math.max(w / sw, h / sh);
-  const s = base * Math.max(1, crop.z);
+  const s = base * Math.max(1, activeState.crop.z);
   const dw = sw * s, dh = sh * s;
-  let x = (w - dw) / 2 + crop.x;
-  let y = (h - dh) / 2 + crop.y;
+  let x = (w - dw) / 2 + activeState.crop.x;
+  let y = (h - dh) / 2 + activeState.crop.y;
   if (dw >= w) x = Math.min(0, Math.max(w - dw, x)); else x = (w - dw) / 2;
   if (dh >= h) y = Math.min(0, Math.max(h - dh, y)); else y = (h - dh) / 2;
   return { x, y, dw, dh };
 }
 
 function drawAll() {
+  syncStateFromUI();
   const canvas = $("#mainCanvas");
   const ctx = canvas.getContext("2d");
   
@@ -305,23 +400,54 @@ function drawAll() {
   ctx.clearRect(0, 0, totalW, totalH);
 
   // 1. 背景與邊框繪製
+  const frameStyle = activeState.frameStyle;
   if (frameStyle === "black") {
     ctx.fillStyle = "#111111";
     ctx.fillRect(0, 0, totalW, totalH);
   } else if (frameStyle === "tint") {
-    // 毛玻璃磨砂與半透明效果：繪製模糊滿版背景圖 + 半透明遮罩
-    if (source) {
+    if (activeState.source) {
       ctx.save();
       ctx.filter = "blur(30px) brightness(0.85)";
-      ctx.drawImage(source, -totalW * 0.1, -totalH * 0.1, totalW * 1.2, totalH * 1.2);
+      ctx.drawImage(activeState.source, -totalW * 0.1, -totalH * 0.1, totalW * 1.2, totalH * 1.2);
       ctx.restore();
     }
-    
-    // 取色半透明遮罩
-    const m = tintColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    const m = activeState.tintColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
     ctx.fillStyle = m ? `rgba(${m[1]},${m[2]},${m[3]},0.58)` : "rgba(100,80,70,0.58)";
     ctx.fillRect(0, 0, totalW, totalH);
+  } else if (frameStyle === "vintage") {
+    // 復古黃紙效果
+    ctx.fillStyle = "#ebdcc4";
+    ctx.fillRect(0, 0, totalW, totalH);
+    // 紙張質感的輕微紋理噪點 overlay
+    ctx.fillStyle = "rgba(110,80,40,0.05)";
+    for (let i = 0; i < totalW; i += 8) {
+      for (let j = 0; j < totalH; j += 8) {
+        if ((i + j) % 3 === 0) ctx.fillRect(i, j, 4, 4);
+      }
+    }
+    // 做內邊框裝飾線
+    ctx.strokeStyle = "rgba(120,90,50,0.2)";
+    ctx.lineWidth = Math.round(totalW * 0.005);
+    ctx.strokeRect(sideMargin * 0.4, sideMargin * 0.4, totalW - sideMargin * 0.8, totalH - sideMargin * 0.8);
+  } else if (frameStyle === "film") {
+    // 經典底片效果
+    ctx.fillStyle = "#0d0d0d";
+    ctx.fillRect(0, 0, totalW, totalH);
+    // 底片齒孔
+    ctx.fillStyle = "#1f1f1f";
+    const holeW = Math.round(sideMargin * 0.4);
+    const holeH = Math.round(holeW * 1.3);
+    for (let y = sideMargin; y < totalH - sideMargin; y += holeH * 1.8) {
+      ctx.fillRect(sideMargin * 0.3, y, holeW, holeH);
+      ctx.fillRect(totalW - sideMargin * 0.3 - holeW, y, holeW, holeH);
+    }
+    // 底片標記字樣
+    ctx.fillStyle = "#e09f3e";
+    ctx.font = `700 ${Math.round(totalW * 0.02)}px ${FONTS.mono}`;
+    ctx.fillText("KODA 400", sideMargin, sideMargin * 0.6);
+    ctx.fillText("▶ 12A", totalW - sideMargin * 2, totalH - bottomMargin * 0.25);
   } else {
+    // 白框
     ctx.fillStyle = "#f7f3ec";
     ctx.fillRect(0, 0, totalW, totalH);
   }
@@ -335,9 +461,9 @@ function drawAll() {
   ctx.rect(photoX, photoY, photoDim.w, photoDim.h);
   ctx.clip();
   
-  if (source) {
+  if (activeState.source) {
     const r = coverRect(photoDim.w, photoDim.h);
-    ctx.drawImage(source, photoX + r.x, photoY + r.y, r.dw, r.dh);
+    ctx.drawImage(activeState.source, photoX + r.x, photoY + r.y, r.dw, r.dh);
     sampleTint(ctx, photoX, photoY, photoDim.w, photoDim.h);
   } else {
     ctx.fillStyle = "#cfc6b8";
@@ -345,7 +471,7 @@ function drawAll() {
   }
   ctx.restore();
 
-  // 3. Exif 文字繪製
+  // 3. Exif 文字與自由備註繪製
   const fontKey = $("#font").value || "sans";
   const font = FONTS[fontKey] || FONTS.sans;
   const sizeBase = Number($("#size").value) || 14;
@@ -355,37 +481,54 @@ function drawAll() {
   ctx.fillStyle = textColor;
   ctx.textBaseline = "top";
 
-  const captionY = photoY + photoDim.h + Math.round(bottomMargin * 0.22);
+  const captionY = photoY + photoDim.h + Math.round(bottomMargin * 0.18);
 
-  // 左側文字 (相機 & 鏡頭)
-  const leftX = photoX + (pos.left / 100) * photoDim.w;
-  const camText = $("#cam").value.trim() || "相機";
-  const lensText = $("#lens").value.trim();
+  // 左側文字 (相機 & 鏡頭 & 自訂備註)
+  const leftX = photoX + (activeState.pos.left / 100) * photoDim.w;
+  const showExif = activeState.showExif === "on";
+  const camText = showExif ? (activeState.cam.trim() || "") : "";
+  const lensText = showExif ? activeState.lens.trim() : "";
+  const noteText = activeState.noteText.trim();
 
   ctx.textAlign = "left";
-  ctx.font = `700 ${fontSize}px ${font}`;
-  ctx.fillText(camText, leftX, captionY);
+  let currentY = captionY;
+
+  if (camText) {
+    ctx.font = `700 ${fontSize}px ${font}`;
+    ctx.fillText(camText, leftX, currentY);
+    currentY += fontSize + 6;
+  }
 
   if (lensText) {
     ctx.font = `500 ${Math.round(fontSize * 0.82)}px ${font}`;
-    ctx.fillText(lensText, leftX, captionY + fontSize + 8);
+    ctx.fillText(lensText, leftX, currentY);
+    currentY += Math.round(fontSize * 0.82) + 6;
+  }
+
+  if (noteText) {
+    ctx.font = `500 ${Math.round(fontSize * 0.95)}px ${font}`;
+    ctx.fillText(noteText, leftX, currentY);
   }
 
   // 右側文字 (ISO / 光圈 / 快門)
-  const rightX = photoX + photoDim.w - (pos.right / 100) * photoDim.w;
-  const iso = $("#iso").value.trim();
-  const fnum = $("#fnum").value.trim();
-  const shut = $("#shut").value.trim();
-  const expText = [iso && ("ISO " + iso.replace(/^ISO\s*/i, "")), fnum, shut].filter(Boolean).join("   ") || "ISO · f/ · 快門";
+  if (showExif) {
+    const rightX = photoX + photoDim.w - (activeState.pos.right / 100) * photoDim.w;
+    const iso = activeState.iso.trim();
+    const fnum = activeState.fnum.trim();
+    const shut = activeState.shut.trim();
+    const expText = [iso && ("ISO " + iso.replace(/^ISO\s*/i, "")), fnum, shut].filter(Boolean).join("   ");
 
-  ctx.textAlign = "right";
-  ctx.font = `700 ${fontSize}px ${font}`;
-  ctx.fillText(expText, rightX, captionY + 8);
+    if (expText) {
+      ctx.textAlign = "right";
+      ctx.font = `700 ${fontSize}px ${font}`;
+      ctx.fillText(expText, rightX, captionY + 4);
+    }
+  }
 
   // 4. 直書日期戳記繪製
-  const dateOn = $("#date-on").value === "on" && ($("#date-text").value || "").trim();
+  const dateOn = $("#date-on").value === "on" && (activeState.dateText || "").trim();
   if (dateOn) {
-    const ds = ($("#date-text").value || "").trim();
+    const ds = (activeState.dateText || "").trim();
     const dateSizeBase = Number($("#date-size").value) || 12;
     const dsize = Math.round(dateSizeBase * (totalW / 360));
     
@@ -393,11 +536,11 @@ function drawAll() {
     ctx.fillStyle = textColor;
     ctx.font = `700 ${dsize}px ${font}`;
     
-    const tx = dateSide === "left" 
+    const tx = activeState.dateSide === "left" 
       ? (sideMargin / 2) 
       : (totalW - sideMargin / 2);
       
-    const ty = photoY + (datePos / 100) * photoDim.h;
+    const ty = photoY + (activeState.datePos / 100) * photoDim.h;
     
     ctx.translate(tx, ty);
     ctx.rotate(Math.PI / 2);
@@ -422,7 +565,7 @@ function sampleTint(ctx, px, py, pw, ph) {
     }
     if (!n) return;
     r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
-    tintColor = `rgba(${r},${g},${b},0.58)`;
+    activeState.tintColor = `rgba(${r},${g},${b},0.58)`;
   } catch(e) {}
 }
 
@@ -507,89 +650,177 @@ function parseTiff(buf, start){
   };
 }
 
-async function loadFile(file){
+async function processSingleFile(file) {
+  const itemState = createDefaultItemState();
   const buf = await file.arrayBuffer();
   let meta = {};
   try { meta = await readExif(buf); } catch(e) {}
-  $("#cam").value = cleanCam(meta.make, meta.model);
-  $("#lens").value = (meta.lens || "").trim();
-  $("#iso").value = meta.iso ? String(meta.iso) : "";
-  $("#fnum").value = fmtF(Number(meta.fnum));
-  $("#shut").value = typeof meta.shut === "number" ? fmtShutter(meta.shut) : "";
+  itemState.cam = cleanCam(meta.make, meta.model);
+  itemState.lens = (meta.lens || "").trim();
+  itemState.iso = meta.iso ? String(meta.iso) : "";
+  itemState.fnum = fmtF(Number(meta.fnum));
+  itemState.shut = typeof meta.shut === "number" ? fmtShutter(meta.shut) : "";
   if (meta.date) {
     const m = String(meta.date).match(/(\d{4}).(\d{2}).(\d{2})/);
-    if (m) $("#date-text").value = m[1] + "." + m[2] + "." + m[3];
+    if (m) itemState.dateText = m[1] + "." + m[2] + "." + m[3];
   }
-  crop = { z: 1, x: 0, y: 0 };
+
   const blob = new Blob([buf], { type: file.type || "image/jpeg" });
+  itemState.thumbUrl = URL.createObjectURL(blob);
+  
   try {
-    source = await createImageBitmap(blob, { imageOrientation: "from-image" });
+    itemState.source = await createImageBitmap(blob, { imageOrientation: "from-image" });
   } catch(e) {
     try {
-      source = await createImageBitmap(blob);
+      itemState.source = await createImageBitmap(blob);
     } catch(e2) {
-      const url = URL.createObjectURL(blob);
+      const url = itemState.thumbUrl;
       const img = new Image();
       await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
-      source = await createImageBitmap(img);
-      URL.revokeObjectURL(url);
+      itemState.source = await createImageBitmap(img);
     }
   }
-  drawAll();
+  return itemState;
+}
+
+async function loadFiles(files) {
+  const maxFiles = Array.from(files).slice(0, 5); // 限制最多 5 張
+  itemsList = [];
+  
+  for (const f of maxFiles) {
+    const st = await processSingleFile(f);
+    itemsList.push(st);
+  }
+
+  if (itemsList.length > 0) {
+    currentIndex = 0;
+    activeState = itemsList[0];
+    renderThumbnails();
+    syncUIFromState();
+    drawAll();
+  }
+
+  $("#save-all").style.display = itemsList.length > 1 ? "block" : "none";
+}
+
+function renderThumbnails() {
+  const container = $("#thumbList");
+  if (itemsList.length <= 1) {
+    container.style.display = "none";
+    return;
+  }
+  container.style.display = "flex";
+  container.innerHTML = "";
+
+  itemsList.forEach((st, idx) => {
+    const div = document.createElement("div");
+    div.className = "thumb-item" + (idx === currentIndex ? " active" : "");
+    const img = document.createElement("img");
+    img.src = st.thumbUrl;
+    div.appendChild(img);
+    div.onclick = () => {
+      syncStateFromUI();
+      currentIndex = idx;
+      activeState = itemsList[idx];
+      renderThumbnails();
+      syncUIFromState();
+      drawAll();
+    };
+    container.appendChild(div);
+  });
 }
 
 function exportCard() {
-  if (!source) { alert("先上傳照片"); return; }
+  if (!activeState.source) { alert("先上傳照片"); return; }
   drawAll();
   flash();
   const canvas = $("#mainCanvas");
   canvas.toBlob(function(b) {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(b);
-    a.download = "polaroid.png";
+    a.download = `polaroid_${currentIndex + 1}.png`;
     a.click();
   }, "image/png");
 }
 
+async function exportAllCards() {
+  if (!itemsList.length || !window.JSZip) {
+    alert("請先讀取照片或確認網路連接");
+    return;
+  }
+  syncStateFromUI();
+  flash();
+  const zip = new JSZip();
+
+  for (let i = 0; i < itemsList.length; i++) {
+    activeState = itemsList[i];
+    drawAll();
+    const canvas = $("#mainCanvas");
+    const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+    zip.file(`polaroid_${i + 1}.png`, blob);
+  }
+
+  // 恢復當前選擇
+  activeState = itemsList[currentIndex];
+  drawAll();
+
+  const content = await zip.generateAsync({ type: "blob" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(content);
+  a.download = "polaroids_batch.zip";
+  a.click();
+}
+
 // 事件繫結
-["cam","lens","iso","fnum","shut","font","size","color","date-on","date-size","date-text"].forEach(id => {
+["cam","lens","iso","fnum","shut","font","size","color","date-on","date-size","date-text","note-text"].forEach(id => {
   $("#" + id).addEventListener("input", drawAll);
+});
+
+$("#show-exif").addEventListener("change", () => {
+  toggleExifInputs();
+  drawAll();
 });
 
 document.querySelectorAll(".frames button").forEach(b => {
   b.onclick = () => {
-    frameStyle = b.dataset.frame;
+    activeState.frameStyle = b.dataset.frame;
     document.querySelectorAll(".frames button").forEach(x => x.classList.toggle("on", x === b));
-    if (frameStyle === "black") $("#color").value = "#f6efe4";
-    else if (frameStyle === "white") $("#color").value = "#2c261e";
-    else if (frameStyle === "tint") $("#color").value = "#ffffff";
+    if (activeState.frameStyle === "black") $("#color").value = "#f6efe4";
+    else if (activeState.frameStyle === "white") $("#color").value = "#2c261e";
+    else if (activeState.frameStyle === "tint") $("#color").value = "#ffffff";
+    else if (activeState.frameStyle === "vintage") $("#color").value = "#3a2e21";
+    else if (activeState.frameStyle === "film") $("#color").value = "#e09f3e";
     drawAll();
   };
 });
 
 document.querySelectorAll("#ratios button").forEach(b => {
   b.onclick = () => {
-    aspect = b.dataset.aspect;
+    activeState.aspect = b.dataset.aspect;
     document.querySelectorAll("#ratios button").forEach(x => x.classList.toggle("on", x === b));
-    crop = { z: 1, x: 0, y: 0 };
+    activeState.crop = { z: 1, x: 0, y: 0 };
     drawAll();
   };
 });
 
 document.querySelectorAll("#date-sides button").forEach(b => {
   b.onclick = () => {
-    dateSide = b.dataset.side;
+    activeState.dateSide = b.dataset.side;
     document.querySelectorAll("#date-sides button").forEach(x => x.classList.toggle("on", x === b));
     drawAll();
   };
 });
 
-$("#reset").onclick = () => { pos = { left: 6, right: 6 }; datePos = 18; drawAll(); };
-$("#reset-crop").onclick = () => { crop = { z: 1, x: 0, y: 0 }; drawAll(); };
+$("#reset").onclick = () => { activeState.pos = { left: 6, right: 6 }; activeState.datePos = 18; drawAll(); };
+$("#reset-crop").onclick = () => { activeState.crop = { z: 1, x: 0, y: 0 }; drawAll(); };
 $("#save").onclick = exportCard;
+$("#save-all").onclick = exportAllCards;
+
 $("#file").addEventListener("change", e => {
-  const f = e.target.files && e.target.files[0];
-  if (f) loadFile(f).catch(err => alert(err.message || "讀取照片失敗"));
+  const files = e.target.files;
+  if (files && files.length > 0) {
+    loadFiles(files).catch(err => alert(err.message || "讀取照片失敗"));
+  }
 });
 
 // Canvas 觸控與互動
@@ -618,13 +849,13 @@ $("#file").addEventListener("change", e => {
   };
 
   const down = e => {
-    if (!source) return;
+    if (!activeState.source) return;
     
     if (e.touches && e.touches.length >= 2) {
       pinching = true;
       mode = "crop";
       startDist = dist(e);
-      startZ = crop.z;
+      startZ = activeState.crop.z;
       return;
     }
 
@@ -637,21 +868,21 @@ $("#file").addEventListener("change", e => {
     if (y > captionY) {
       if (x < canvas.width / 2) {
         mode = "textL";
-        startPosVal = pos.left;
+        startPosVal = activeState.pos.left;
       } else {
         mode = "textR";
-        startPosVal = pos.right;
+        startPosVal = activeState.pos.right;
       }
-    } else if ($("#date-on").value === "on" && x < sideMargin * 2 && dateSide === "left") {
+    } else if ($("#date-on").value === "on" && x < sideMargin * 2 && activeState.dateSide === "left") {
       mode = "stamp";
-      startPosVal = datePos;
-    } else if ($("#date-on").value === "on" && x > canvas.width - sideMargin * 2 && dateSide === "right") {
+      startPosVal = activeState.datePos;
+    } else if ($("#date-on").value === "on" && x > canvas.width - sideMargin * 2 && activeState.dateSide === "right") {
       mode = "stamp";
-      startPosVal = datePos;
+      startPosVal = activeState.datePos;
     } else {
       mode = "crop";
-      ox = crop.x;
-      oy = crop.y;
+      ox = activeState.crop.x;
+      oy = activeState.crop.y;
     }
 
     sx = pt(e).clientX;
@@ -665,7 +896,7 @@ $("#file").addEventListener("change", e => {
     if (pinching && e.touches && e.touches.length >= 2) {
       e.preventDefault();
       const d = dist(e);
-      crop.z = Math.max(1, Math.min(4, startZ * (d / Math.max(1, startDist))));
+      activeState.crop.z = Math.max(1, Math.min(4, startZ * (d / Math.max(1, startDist))));
       drawAll();
       return;
     }
@@ -679,17 +910,17 @@ $("#file").addEventListener("change", e => {
     const dy = (pt(e).clientY - sy) * scale;
 
     if (mode === "crop") {
-      crop.x = ox + dx;
-      crop.y = oy + dy;
+      activeState.crop.x = ox + dx;
+      activeState.crop.y = oy + dy;
     } else if (mode === "textL") {
       const deltaPercent = (dx / photoDim.w) * 100;
-      pos.left = Math.max(2, Math.min(45, startPosVal + deltaPercent));
+      activeState.pos.left = Math.max(2, Math.min(45, startPosVal + deltaPercent));
     } else if (mode === "textR") {
       const deltaPercent = (-dx / photoDim.w) * 100;
-      pos.right = Math.max(2, Math.min(45, startPosVal + deltaPercent));
+      activeState.pos.right = Math.max(2, Math.min(45, startPosVal + deltaPercent));
     } else if (mode === "stamp") {
       const deltaPercent = (dy / photoDim.h) * 100;
-      datePos = Math.max(4, Math.min(86, startPosVal + deltaPercent));
+      activeState.datePos = Math.max(4, Math.min(86, startPosVal + deltaPercent));
     }
 
     drawAll();
@@ -710,9 +941,9 @@ $("#file").addEventListener("change", e => {
   window.addEventListener("touchend", up);
 
   canvas.addEventListener("wheel", e => {
-    if (!source) return;
+    if (!activeState.source) return;
     e.preventDefault();
-    crop.z = Math.max(1, Math.min(4, crop.z + (e.deltaY < 0 ? 0.08 : -0.08)));
+    activeState.crop.z = Math.max(1, Math.min(4, activeState.crop.z + (e.deltaY < 0 ? 0.08 : -0.08)));
     drawAll();
   }, { passive: false });
 })();
