@@ -210,6 +210,20 @@
     .gate-card h2 { margin:0 0 8px; font-family:"Noto Serif JP",serif; font-size:18px; letter-spacing:.12em; }
     .gate-card p { color:var(--muted); font-size:12px; line-height:1.6; margin:0 0 14px; }
     .who { color:var(--muted); font-size:10px; max-width:72px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* Footer / Clear Cache Button */
+    .footer-tools {
+      margin-top: 32px;
+      padding: 24px 16px;
+      text-align: center;
+      border-top: 1px dashed var(--line);
+    }
+    .footer-tools p {
+      font-size: 11px;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+
     @keyframes shutter { 0% {opacity:0} 18% {opacity:1} 100% {opacity:0} }
   </style>
 </head>
@@ -260,6 +274,12 @@
           <button class="pbtn ghost" id="btn-import">匯入設定</button>
         </div>
         <div class="grid" id="grid"></div>
+
+        <!-- 頁尾清除快取區域 -->
+        <div class="footer-tools">
+          <p>更新版本或網頁異常時可使用</p>
+          <button class="pbtn ghost" id="btn-clear-cache" style="font-size:12px; opacity:0.8;">🧹 清除快取並重新整理</button>
+        </div>
       </div>
     </section>
 
@@ -573,7 +593,7 @@ async function renderDetail(id){
     ["軟片模擬", r.filmSim],["動態範圍", r.dr],["顆粒效果", r.grain],
     ["彩色正片效果", r.colorChrome],["彩色正片FX藍", r.colorChromeBlue],
     ["白平衡", r.wb==="色溫"?`色溫 ${r.kelvin}K`:r.wb],
-    ["白平衡偏移", `R ${r.shiftR}　B ${r.shiftB}`],
+    ["白平衡偏移", `R ${r.shiftR} B ${r.shiftB}`],
     ["高光色調", r.highlight],["陰影色調", r.shadow],["色彩", r.color],
     ["銳利度", r.sharpness],["高感光度降噪", r.nr],["清晰度", r.clarity],
     ["ISO", r.iso||"—"],["曝光補償", r.ev||"—"]
@@ -1152,8 +1172,7 @@ async function shareCard(r){
     ["彩色正片FX藍", r.colorChromeBlue],
     ["白平衡", r.wb==="色溫" ? ("色溫 "+(r.kelvin||"")+"K") : r.wb],
     ["白平衡偏移", "R "+r.shiftR+"   B "+r.shiftB],
-    ["高光色調", r.highlight],
-    ["陰影色調", r.shadow],
+    ["高光色調", r.highlight],["陰影色調", r.shadow],
     ["色彩", r.color],
     ["銳利度", r.sharpness],
     ["高感光度降噪", r.nr],
@@ -1248,8 +1267,37 @@ async function importSettings(file){
     renderList();
   }catch{ toast("匯入失敗，請確認 JSON"); }
 }
+
+async function clearAppCache(){
+  if(!confirm("確定要清除快取並重新載入嗎？\n（食譜資料不會被刪除）")) return;
+  toast("清理快取中…");
+  try {
+    // 1. 清除 Service Worker 快取 (Cache Storage)
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+    }
+    // 2. 註銷 Service Worker 註冊
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const reg of registrations) {
+        await reg.unregister();
+      }
+    }
+    toast("快取已清除，正在重新載入…");
+    setTimeout(() => {
+      // 強制不從快取重新載入
+      window.location.reload(true);
+    }, 600);
+  } catch (e) {
+    console.error("Clear Cache Error:", e);
+    window.location.reload(true);
+  }
+}
+
 $("#btn-export").onclick = exportSettings;
 $("#btn-import").onclick = () => $("#import-file").click();
+$("#btn-clear-cache").onclick = clearAppCache;
 $("#import-file").addEventListener("change", e=>{
   const f = e.target.files[0]; e.target.value=""; if(f) importSettings(f);
 });
