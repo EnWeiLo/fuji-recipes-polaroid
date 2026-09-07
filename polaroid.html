@@ -117,6 +117,7 @@
     }
     .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+    .sync-box { display:grid; grid-template-columns:1.5fr 1fr; gap:8px; align-items:end; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 12px; border: 1px solid var(--line); }
     .hint { color:var(--muted); font-size:12px; line-height:1.6; }
     .ratios { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:10px 0; }
     .ratios button, .sides button {
@@ -177,6 +178,14 @@
     </div>
     
     <div class="form">
+      <!-- 特定照片同步設定區塊 -->
+      <div class="sync-box" id="sync-container" style="display:none;">
+        <label class="field">同步設定來源
+          <select id="sync-source-select"></select>
+        </label>
+        <button class="pbtn ghost" id="apply-sync-btn" style="border-color: var(--fuji); color: var(--fuji);">套用設定</button>
+      </div>
+
       <!-- 獨立開關區 -->
       <div class="row2">
         <label class="field">相機/鏡頭/備註 顯示
@@ -358,7 +367,14 @@ function createDefaultItemState() {
     dateSide: "left",
     datePos: 18,
     cam: "", lens: "", iso: "", fnum: "", shut: "", dateText: "",
-    noteText: "", showCam: "on", showExp: "on"
+    noteText: "", showCam: "on", showExp: "on",
+    // 獨立字型與樣式設定
+    font: "sans",
+    color: "#2c261e",
+    sizeLeft: "14",
+    sizeRight: "14",
+    dateOn: "off",
+    dateSize: "12"
   };
 }
 
@@ -375,6 +391,14 @@ function syncStateFromUI() {
   activeState.noteText = $("#note-text").value;
   activeState.showCam = $("#show-cam").value;
   activeState.showExp = $("#show-exp").value;
+  
+  // 字型與日期相關設定
+  activeState.font = $("#font").value;
+  activeState.color = $("#color").value;
+  activeState.sizeLeft = $("#size-left").value;
+  activeState.sizeRight = $("#size-right").value;
+  activeState.dateOn = $("#date-on").value;
+  activeState.dateSize = $("#date-size").value;
 }
 
 function syncUIFromState() {
@@ -389,11 +413,20 @@ function syncUIFromState() {
   $("#show-cam").value = activeState.showCam || "on";
   $("#show-exp").value = activeState.showExp || "on";
 
+  // 字型與日期相關 UI 更新
+  $("#font").value = activeState.font || "sans";
+  $("#color").value = activeState.color || "#2c261e";
+  $("#size-left").value = activeState.sizeLeft || "14";
+  $("#size-right").value = activeState.sizeRight || "14";
+  $("#date-on").value = activeState.dateOn || "off";
+  $("#date-size").value = activeState.dateSize || "12";
+
   document.querySelectorAll(".frames button").forEach(x => x.classList.toggle("on", x.dataset.frame === activeState.frameStyle));
   document.querySelectorAll("#ratios button").forEach(x => x.classList.toggle("on", x.dataset.aspect === activeState.aspect));
   document.querySelectorAll("#date-sides button").forEach(x => x.classList.toggle("on", x.dataset.side === activeState.dateSide));
   
   toggleExifInputs();
+  updateSyncSelectOptions();
 }
 
 function toggleExifInputs() {
@@ -403,6 +436,29 @@ function toggleExifInputs() {
   $("#exif-row-1").style.display = showCam ? "grid" : "none";
   $("#exif-row-2").style.display = showExp ? "grid" : "none";
   $("#exif-row-3").style.display = showExp ? "grid" : "none";
+}
+
+// 更新「同步來源」下拉選單
+function updateSyncSelectOptions() {
+  const syncContainer = $("#sync-container");
+  const select = $("#sync-source-select");
+  
+  if (itemsList.length <= 1) {
+    syncContainer.style.display = "none";
+    return;
+  }
+
+  syncContainer.style.display = "grid";
+  select.innerHTML = "";
+
+  itemsList.forEach((_, idx) => {
+    if (idx !== currentIndex) {
+      const opt = document.createElement("option");
+      opt.value = idx;
+      opt.textContent = `第 ${idx + 1} 張照片`;
+      select.appendChild(opt);
+    }
+  });
 }
 
 function getTargetPhotoSize() {
@@ -786,6 +842,7 @@ function renderThumbnails() {
     container.style.display = "none";
     mainPickLabel.style.display = "grid";
     $("#save-all").style.display = "none";
+    $("#sync-container").style.display = "none";
     return;
   }
 
@@ -841,6 +898,7 @@ function renderThumbnails() {
   }
 
   $("#save-all").style.display = itemsList.length > 1 ? "block" : "none";
+  updateSyncSelectOptions();
 }
 
 function exportCard() {
@@ -881,6 +939,39 @@ async function exportAllCards() {
   a.href = URL.createObjectURL(content);
   a.download = "polaroids_batch.zip";
   a.click();
+}
+
+// 從特定照片複製設定至當前照片
+function applySyncFromSelectedPhoto() {
+  const select = $("#sync-source-select");
+  const targetIdx = Number(select.value);
+
+  if (isNaN(targetIdx) || !itemsList[targetIdx]) return;
+
+  const targetState = itemsList[targetIdx];
+
+  // 1. 是否顯示相機/鏡頭/備註 與 快門/光圈/ISO
+  activeState.showCam = targetState.showCam;
+  activeState.showExp = targetState.showExp;
+
+  // 2. 備註內容
+  activeState.noteText = targetState.noteText;
+
+  // 3. 時間戳的位子、開關與左右側
+  activeState.dateOn = targetState.dateOn;
+  activeState.datePos = targetState.datePos;
+  activeState.dateSide = targetState.dateSide;
+  activeState.dateSize = targetState.dateSize;
+
+  // 4. 顏色與字型大小相關
+  activeState.color = targetState.color;
+  activeState.font = targetState.font;
+  activeState.sizeLeft = targetState.sizeLeft;
+  activeState.sizeRight = targetState.sizeRight;
+  activeState.pos = { ...targetState.pos }; // 文字橫向位置同步
+
+  syncUIFromState();
+  drawAll();
 }
 
 // 事件繫結
@@ -931,6 +1022,7 @@ document.querySelectorAll("#date-sides button").forEach(b => {
   };
 });
 
+$("#apply-sync-btn").onclick = applySyncFromSelectedPhoto;
 $("#reset").onclick = () => { if (activeState) { activeState.pos = { left: 6, right: 6 }; activeState.datePos = 18; drawAll(); } };
 $("#reset-crop").onclick = () => { if (activeState) { activeState.crop = { z: 1, x: 0, y: 0 }; drawAll(); } };
 $("#save").onclick = exportCard;
