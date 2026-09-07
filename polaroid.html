@@ -142,9 +142,7 @@
       </div>
       <button class="pbtn ghost full" id="reset">重設文字位置</button>
       <button class="pbtn red full" id="save">下載拍立得</button>
-      <button class="pbtn full" id="save-map" disabled>含地圖下載（需 GPS）</button>
     </div>
-    <p class="hint" id="gps-hint">上傳含定位的相機原圖後，可多出一張：上照片、下地圖。</p>
     <p class="hint">底邊兩塊字可左右拖。白框／黑框／取色半透明可切換。直式照片不再被轉成橫的。</p>
   </div>
 <script>
@@ -156,7 +154,6 @@ const FONTS = {
   mono: '"Share Tech Mono", ui-monospace, monospace'
 };
 let source = null;
-let lastGps = null;
 let frameStyle = "white";
 let tint = "rgba(120,90,70,.55)";
 let pos = { left: 6, right: 6 };
@@ -304,38 +301,13 @@ function parseTiff(buf, start){
   };
   const ifd0 = readIFD(u32(4));
   const exif = ifd0[0x8769] ? readIFD(ifd0[0x8769]) : {};
-  const gpsPtr = ifd0[0x8825];
-  let gps=null;
-  if(typeof gpsPtr==="number" && gpsPtr>0){
-    const n=u16(gpsPtr);
-    const g={};
-    for(let i=0;i<n;i++){
-      const e=gpsPtr+2+i*12;
-      const tag=u16(e), typ=u16(e+2), cnt=u32(e+4), valOff=e+8;
-      if(tag===1 || tag===3) g[tag]=decode(typ,cnt,valOff);
-      else if(tag===2 || tag===4){
-        const o = (8*cnt<=4) ? valOff : u32(valOff);
-        const arr=[];
-        for(let k=0;k<3;k++){
-          const nn=v.getUint32(start+o+k*8,le), dd=v.getUint32(start+o+k*8+4,le);
-          arr.push(dd?nn/dd:0);
-        }
-        g[tag]=arr;
-      }
-    }
-    if(g[2] && g[4]){
-      const dec=(a,ref)=>{ const d=a[0]+a[1]/60+a[2]/3600; return (ref==="S"||ref==="W")?-d:d; };
-      gps={ lat:dec(g[2], g[1]||"N"), lon:dec(g[4], g[3]||"E") };
-    }
-  }
   return {
     make: ifd0[0x010F]||"",
     model: ifd0[0x0110]||"",
     lens: exif[0xA434]||"",
     iso: exif[0x8827]||exif[0x8833]||"",
     fnum: exif[0x829D]||"",
-    shut: exif[0x829A]||"",
-    gps
+    shut: exif[0x829A]||""
   };
 }
 
@@ -348,12 +320,6 @@ async function loadFile(file){
   $("#iso").value = meta.iso ? String(meta.iso) : "";
   $("#fnum").value = fmtF(Number(meta.fnum));
   $("#shut").value = typeof meta.shut==="number" ? fmtShutter(meta.shut) : "";
-  lastGps = (meta.gps && isFinite(meta.gps.lat) && isFinite(meta.gps.lon)) ? meta.gps : null;
-  const mapBtn=$("#save-map"), hint=$("#gps-hint");
-  if(mapBtn) mapBtn.disabled = !lastGps;
-  if(hint) hint.textContent = lastGps
-    ? ("已讀到定位 "+lastGps.lat.toFixed(5)+", "+lastGps.lon.toFixed(5))
-    : "這張沒有 GPS。請用相機原圖（X-T50／X-E5 需與手機同步位置）。";
   fillText();
   const blob = new Blob([buf], { type: file.type || "image/jpeg" });
   try{
@@ -372,121 +338,6 @@ async function loadFile(file){
   drawPreview();
 }
 
-
-function lngLatToWorld(lat, lon, z){
-  const n = Math.pow(2, z);
-  const x = (lon+180)/360*n;
-  const rad = lat*Math.PI/180;
-  const y = (1-Math.log(Math.tan(rad)+1/Math.cos(rad))/Math.PI)/2*n;
-  return {x,y,n};
-}
-function loadTile(z,x,y){
-  const url = "https://basemaps.cartocdn.com/rastertiles/voyager/"+z+"/"+x+"/"+y+"@2x.png";
-  return new Promise((res,rej)=>{
-    const img=new Image();
-    img.crossOrigin="anonymous";
-    img.onload=()=>res(img);
-    img.onerror=()=>rej(new Error("地圖圖磚失敗"));
-    img.src=url;
-  });
-}
-async function buildMapCanvas(lat, lon, w, h){
-  const z=15;
-  const world=lngLatToWorld(lat,lon,z);
-  const tile=256;
-  const cols=Math.ceil(w/tile)+2;
-  const rows=Math.ceil(h/tile)+2;
-  const originX=Math.floor(world.x)-Math.floor(cols/2);
-  const originY=Math.floor(world.y)-Math.floor(rows/2);
-  const jobs=[];
-  for(let j=0;j<rows;j++){
-    for(let i=0;i<cols;i++){
-      const tx=originX+i, ty=originY+j;
-      if(tx<0||ty<0||tx>=world.n||ty>=world.n) continue;
-      jobs.push(loadTile(z,tx,ty).then(img=>({img,i,j})).catch(()=>null));
-    }
-  }
-  const parts=await Promise.all(jobs);
-  const map=document.createElement("canvas");
-  map.width=w; map.height=h;
-  const ctx=map.getContext("2d");
-  ctx.fillStyle="#e7e1d4";
-  ctx.fillRect(0,0,w,h);
-  const pixelX=(world.x-originX)*tile;
-  const pixelY=(world.y-originY)*tile;
-  const ox=w/2-pixelX, oy=h/2-pixelY;
-  parts.forEach(p=>{
-    if(!p) return;
-    ctx.drawImage(p.img, ox+p.i*tile, oy+p.j*tile, tile, tile);
-  });
-  ctx.fillStyle="rgba(244,238,228,0.18)";
-  ctx.fillRect(0,0,w,h);
-  const px=w/2, py=h/2;
-  ctx.fillStyle="#e60012";
-  ctx.beginPath(); ctx.arc(px, py-10, 8, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(px, py+12); ctx.lineTo(px-7, py-4); ctx.lineTo(px+7, py-4); ctx.closePath(); ctx.fill();
-  ctx.fillStyle="#fff";
-  ctx.beginPath(); ctx.arc(px, py-10, 3.2, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle="rgba(42,34,24,.55)";
-  ctx.font="10px 'Noto Sans TC',sans-serif";
-  ctx.textAlign="left";
-  ctx.fillText("© OpenStreetMap © CARTO", 8, h-8);
-  return map;
-}
-async function exportMapCard(){
-  if(!source){ alert("先上傳照片"); return; }
-  if(!lastGps){ alert("這張沒有 GPS"); return; }
-  const photo=$("#photo");
-  const side=Math.round(photo.width*0.046);
-  const mapH=Math.round(photo.width*0.42);
-  const gap=Math.round(photo.width*0.02);
-  const bottom=Math.round(photo.width*0.20);
-  const w=photo.width+side*2;
-  const h=side+photo.height+gap+mapH+bottom;
-  let map;
-  try{ map=await buildMapCanvas(lastGps.lat, lastGps.lon, photo.width, mapH); }
-  catch(e){ alert(e.message||"地圖載入失敗"); return; }
-  const out=document.createElement("canvas");
-  out.width=w; out.height=h;
-  const ctx=out.getContext("2d");
-  if(frameStyle==="black") ctx.fillStyle="#111";
-  else if(frameStyle==="tint"){
-    const m=tint.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-    ctx.fillStyle=m?"rgba("+m[1]+","+m[2]+","+m[3]+",0.92)":"#6a5344";
-  } else ctx.fillStyle="#f7f3ec";
-  ctx.fillRect(0,0,w,h);
-  ctx.drawImage(photo, side, side);
-  ctx.drawImage(map, side, side+photo.height+gap);
-  const color=$("#color").value;
-  const font=FONTS[$("#font").value]||FONTS.sans;
-  const size=Math.round((Number($("#size").value)||14)*(photo.width/360));
-  ctx.fillStyle=color;
-  ctx.textBaseline="top";
-  const y=side+photo.height+gap+mapH+Math.round(bottom*0.22);
-  const cam=$("#cam").value.trim();
-  const lens=$("#lens").value.trim();
-  const iso=$("#iso").value.trim();
-  const fnum=$("#fnum").value.trim();
-  const shut=$("#shut").value.trim();
-  const leftX=side+(pos.left/100)*photo.width;
-  ctx.textAlign="left";
-  ctx.font="700 "+size+"px "+font;
-  ctx.fillText(cam||"", leftX, y);
-  ctx.font="500 "+Math.round(size*0.82)+"px "+font;
-  ctx.fillText(lens||"", leftX, y+size+6);
-  const rightX=w-side-(pos.right/100)*photo.width;
-  ctx.textAlign="right";
-  ctx.font="700 "+size+"px "+font;
-  ctx.fillText([iso && ("ISO "+iso.replace(/^ISO\s*/i,"")), fnum, shut].filter(Boolean).join("   "), rightX, y+8);
-  flash();
-  out.toBlob(function(b){
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(b);
-    a.download="polaroid-map.jpg";
-    a.click();
-  },"image/jpeg",0.92);
-}
 
 function exportCard(){
   if(!source){ alert("先上傳照片"); return; }
@@ -577,7 +428,6 @@ $("#file").addEventListener("change", e=>{
 document.querySelectorAll(".frames button").forEach(b=>b.onclick=()=>setFrame(b.dataset.frame));
 $("#reset").onclick=()=>{ pos={left:6,right:6}; applyPos(); };
 $("#save").onclick=exportCard;
-$("#save-map").onclick=()=>exportMapCard();
 bindDrag($("#boxL"),"left");
 bindDrag($("#boxR"),"right");
 applyType(); applyPos(); drawPreview();
