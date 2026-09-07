@@ -549,7 +549,6 @@ function drawAll() {
     }
     ctx.fillStyle = "#e09f3e";
     ctx.font = `700 ${Math.round(totalW * 0.02)}px ${FONTS.mono}`;
-    ctx.fillText("KODA 400", sideMargin, sideMargin * 0.6);
     ctx.fillText("▶ 12A", totalW - sideMargin * 2, totalH - bottomMargin * 0.25);
   } else {
     ctx.fillStyle = "#f7f3ec";
@@ -1007,7 +1006,7 @@ document.querySelectorAll("#ratios button").forEach(b => {
   b.onclick = () => {
     if (!activeState) return;
     activeState.aspect = b.dataset.aspect;
-    document.querySelectorAll("#ratios button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll("#ratios button").forEach(x => x.classList.toggle("on", x.dataset.aspect === activeState.aspect));
     activeState.crop = { z: 1, x: 0, y: 0 };
     drawAll();
   };
@@ -1017,7 +1016,7 @@ document.querySelectorAll("#date-sides button").forEach(b => {
   b.onclick = () => {
     if (!activeState) return;
     activeState.dateSide = b.dataset.side;
-    document.querySelectorAll("#date-sides button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll("#date-sides button").forEach(x => x.classList.toggle("on", x.dataset.side === activeState.dateSide));
     drawAll();
   };
 });
