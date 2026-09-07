@@ -38,6 +38,7 @@
     .pbtn.ghost { background:transparent; color:var(--cream); box-shadow:inset 0 0 0 1px var(--line); }
     .pbtn.full { width:100%; margin-top:6px; }
     .wrap { padding:16px; max-width:760px; margin:0 auto; padding-bottom:calc(32px + var(--safe-b)); }
+    
     .pick {
       position:relative; display:grid; place-items:center;
       width:100%; min-height:48px; margin-bottom:14px;
@@ -48,15 +49,40 @@
       position:absolute; inset:0; width:100%; height:100%;
       opacity:0; margin:0; cursor:pointer; font-size:16px;
     }
+
+    /* 縮圖列與刪除/新增按鈕樣式 */
     .thumb-list {
-      display:flex; gap:10px; overflow-x:auto; padding:8px 0; margin-bottom:10px;
+      display:flex; gap:10px; overflow-x:auto; padding:8px 0; margin-bottom:10px; align-items:center;
     }
     .thumb-item {
       width:64px; height:64px; border-radius:8px; border:2px solid transparent;
-      overflow:hidden; cursor:pointer; flex-shrink:0; position:relative; background:#222;
+      overflow:visible; cursor:pointer; flex-shrink:0; position:relative; background:#222;
     }
-    .thumb-item img { width:100%; height:100%; object-fit:cover; }
+    .thumb-item img { width:100%; height:100%; object-fit:cover; border-radius:6px; }
     .thumb-item.active { border-color:var(--fuji); }
+    
+    /* 刪除小按鈕 (✕) */
+    .thumb-del {
+      position:absolute; top:-6px; right:-6px; width:20px; height:20px;
+      border-radius:50%; background:var(--fuji); color:#fff; border:1.5px solid #161311;
+      font-size:12px; font-weight:bold; display:grid; place-items:center;
+      line-height:1; cursor:pointer; z-index:2;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .thumb-del:hover { transform: scale(1.1); }
+
+    /* 補加照片 (+) 按鈕 */
+    .thumb-add {
+      width:64px; height:64px; border-radius:8px; border:2px dashed var(--muted);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      color:var(--muted); font-size:20px; font-weight:bold; flex-shrink:0; position:relative;
+      background:rgba(255,255,255,0.03); cursor:pointer;
+    }
+    .thumb-add input {
+      position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;
+    }
+    .thumb-add:hover { border-color:var(--cream); color:var(--cream); }
+
     .stage { display:grid; place-items:center; margin:8px 0 16px; }
     .polaroid-container {
       width:min(90vw, 440px);
@@ -120,14 +146,14 @@
     <div class="brand"><h1>拍立得</h1></div>
   </header>
   <div class="wrap">
-    <label class="pick">選擇照片 (最多 5 張)
+    <label class="pick" id="mainPickLabel">選擇照片 (最多 5 張)
       <input id="file" type="file" multiple accept="image/jpeg,image/png,image/heic,image/heif,image/*" />
     </label>
     
     <!-- 批量圖片選擇縮圖列 -->
     <div class="thumb-list" id="thumbList" style="display:none;"></div>
 
-    <p class="hint">iPhone 選圖後若有「加入／完成」請按下去。可一次選最多 5 張相片切換編輯。</p>
+    <p class="hint">iPhone 選圖後若有「加入／完成」請按下去。可點擊縮圖刪除或切換編輯。</p>
     
     <div class="frames">
       <button class="w on" data-frame="white">白框</button>
@@ -151,17 +177,25 @@
     </div>
     
     <div class="form">
+      <!-- 獨立開關區 -->
       <div class="row2">
-        <label class="field">顯示 EXIF 參數
-          <select id="show-exif">
+        <label class="field">相機/鏡頭/備註 顯示
+          <select id="show-cam">
             <option value="on" selected>開</option>
             <option value="off">關</option>
           </select>
         </label>
-        <label class="field">自訂備註 / 標題
-          <input id="note-text" placeholder="輸入隨想或地點...">
+        <label class="field">快門/光圈/ISO 顯示
+          <select id="show-exp">
+            <option value="on" selected>開</option>
+            <option value="off">關</option>
+          </select>
         </label>
       </div>
+
+      <label class="field">自訂備註 / 標題
+        <input id="note-text" placeholder="輸入隨想或地點...">
+      </label>
 
       <div class="row2" id="exif-row-1">
         <label class="field">相機<input id="cam" placeholder="X-T50"></label>
@@ -173,7 +207,7 @@
       </div>
       <label class="field" id="exif-row-3">快門<input id="shut" placeholder="1/250"></label>
       
-      <div class="row3">
+      <div class="row2">
         <label class="field">字型
           <select id="font">
             <option value="sans">無襯線 (Noto Sans)</option>
@@ -185,15 +219,27 @@
             <option value="yuji">懷舊墨楷 (Yuji Syuku)</option>
           </select>
         </label>
-        <label class="field">大小
-          <select id="size">
+        <label class="field">顏色<input id="color" type="color" value="#2c261e"></label>
+      </div>
+
+      <!-- 獨立字體大小設定區 -->
+      <div class="row2">
+        <label class="field">左側字體大小 (相機/備註)
+          <select id="size-left">
             <option value="12">小</option>
             <option value="14" selected>中</option>
             <option value="18">大</option>
             <option value="22">特大</option>
           </select>
         </label>
-        <label class="field">顏色<input id="color" type="color" value="#2c261e"></label>
+        <label class="field">右側字體大小 (快門參數)
+          <select id="size-right">
+            <option value="12">小</option>
+            <option value="14" selected>中</option>
+            <option value="18">大</option>
+            <option value="22">特大</option>
+          </select>
+        </label>
       </div>
       
       <div class="row2">
@@ -230,7 +276,7 @@
 <script>
 const $ = s => document.querySelector(s);
 
-// 清脆俐落的單眼快門音效
+// 快門音效
 function playCameraSound() {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -300,7 +346,6 @@ const FONTS = {
 let itemsList = []; 
 let currentIndex = 0;
 
-// 單張狀態快照數據結構
 function createDefaultItemState() {
   return {
     source: null,
@@ -313,7 +358,7 @@ function createDefaultItemState() {
     dateSide: "left",
     datePos: 18,
     cam: "", lens: "", iso: "", fnum: "", shut: "", dateText: "",
-    noteText: "", showExif: "on"
+    noteText: "", showCam: "on", showExp: "on"
   };
 }
 
@@ -328,7 +373,8 @@ function syncStateFromUI() {
   activeState.shut = $("#shut").value;
   activeState.dateText = $("#date-text").value;
   activeState.noteText = $("#note-text").value;
-  activeState.showExif = $("#show-exif").value;
+  activeState.showCam = $("#show-cam").value;
+  activeState.showExp = $("#show-exp").value;
 }
 
 function syncUIFromState() {
@@ -340,9 +386,9 @@ function syncUIFromState() {
   $("#shut").value = activeState.shut || "";
   $("#date-text").value = activeState.dateText || "";
   $("#note-text").value = activeState.noteText || "";
-  $("#show-exif").value = activeState.showExif || "on";
+  $("#show-cam").value = activeState.showCam || "on";
+  $("#show-exp").value = activeState.showExp || "on";
 
-  // 按鈕狀態 toggle
   document.querySelectorAll(".frames button").forEach(x => x.classList.toggle("on", x.dataset.frame === activeState.frameStyle));
   document.querySelectorAll("#ratios button").forEach(x => x.classList.toggle("on", x.dataset.aspect === activeState.aspect));
   document.querySelectorAll("#date-sides button").forEach(x => x.classList.toggle("on", x.dataset.side === activeState.dateSide));
@@ -351,14 +397,16 @@ function syncUIFromState() {
 }
 
 function toggleExifInputs() {
-  const show = $("#show-exif").value === "on";
-  $("#exif-row-1").style.display = show ? "grid" : "none";
-  $("#exif-row-2").style.display = show ? "grid" : "none";
-  $("#exif-row-3").style.display = show ? "grid" : "none";
+  const showCam = $("#show-cam").value === "on";
+  const showExp = $("#show-exp").value === "on";
+  
+  $("#exif-row-1").style.display = showCam ? "grid" : "none";
+  $("#exif-row-2").style.display = showExp ? "grid" : "none";
+  $("#exif-row-3").style.display = showExp ? "grid" : "none";
 }
 
 function getTargetPhotoSize() {
-  if (!activeState.source) return { w: 1400, h: 1050 };
+  if (!activeState || !activeState.source) return { w: 1400, h: 1050 };
   let r = activeState.source.width / activeState.source.height;
   if (activeState.aspect === "mini") r = 2 / 3;
   else if (activeState.aspect === "square") r = 1;
@@ -369,7 +417,7 @@ function getTargetPhotoSize() {
 }
 
 function coverRect(w, h) {
-  if (!activeState.source) return { x:0, y:0, dw:w, dh:h };
+  if (!activeState || !activeState.source) return { x:0, y:0, dw:w, dh:h };
   const sw = activeState.source.width, sh = activeState.source.height;
   const base = Math.max(w / sw, h / sh);
   const s = base * Math.max(1, activeState.crop.z);
@@ -396,8 +444,15 @@ function drawAll() {
   canvas.width = totalW;
   canvas.height = totalH;
 
-  // 清空畫布
   ctx.clearRect(0, 0, totalW, totalH);
+
+  if (!activeState || !activeState.source) {
+    ctx.fillStyle = "#f7f3ec";
+    ctx.fillRect(0, 0, totalW, totalH);
+    ctx.fillStyle = "#cfc6b8";
+    ctx.fillRect(sideMargin, sideMargin, photoDim.w, photoDim.h);
+    return;
+  }
 
   // 1. 背景與邊框繪製
   const frameStyle = activeState.frameStyle;
@@ -415,25 +470,20 @@ function drawAll() {
     ctx.fillStyle = m ? `rgba(${m[1]},${m[2]},${m[3]},0.58)` : "rgba(100,80,70,0.58)";
     ctx.fillRect(0, 0, totalW, totalH);
   } else if (frameStyle === "vintage") {
-    // 復古黃紙效果
     ctx.fillStyle = "#ebdcc4";
     ctx.fillRect(0, 0, totalW, totalH);
-    // 紙張質感的輕微紋理噪點 overlay
     ctx.fillStyle = "rgba(110,80,40,0.05)";
     for (let i = 0; i < totalW; i += 8) {
       for (let j = 0; j < totalH; j += 8) {
         if ((i + j) % 3 === 0) ctx.fillRect(i, j, 4, 4);
       }
     }
-    // 做內邊框裝飾線
     ctx.strokeStyle = "rgba(120,90,50,0.2)";
     ctx.lineWidth = Math.round(totalW * 0.005);
     ctx.strokeRect(sideMargin * 0.4, sideMargin * 0.4, totalW - sideMargin * 0.8, totalH - sideMargin * 0.8);
   } else if (frameStyle === "film") {
-    // 經典底片效果
     ctx.fillStyle = "#0d0d0d";
     ctx.fillRect(0, 0, totalW, totalH);
-    // 底片齒孔
     ctx.fillStyle = "#1f1f1f";
     const holeW = Math.round(sideMargin * 0.4);
     const holeH = Math.round(holeW * 1.3);
@@ -441,13 +491,11 @@ function drawAll() {
       ctx.fillRect(sideMargin * 0.3, y, holeW, holeH);
       ctx.fillRect(totalW - sideMargin * 0.3 - holeW, y, holeW, holeH);
     }
-    // 底片標記字樣
     ctx.fillStyle = "#e09f3e";
     ctx.font = `700 ${Math.round(totalW * 0.02)}px ${FONTS.mono}`;
     ctx.fillText("KODA 400", sideMargin, sideMargin * 0.6);
     ctx.fillText("▶ 12A", totalW - sideMargin * 2, totalH - bottomMargin * 0.25);
   } else {
-    // 白框
     ctx.fillStyle = "#f7f3ec";
     ctx.fillRect(0, 0, totalW, totalH);
   }
@@ -465,53 +513,55 @@ function drawAll() {
     const r = coverRect(photoDim.w, photoDim.h);
     ctx.drawImage(activeState.source, photoX + r.x, photoY + r.y, r.dw, r.dh);
     sampleTint(ctx, photoX, photoY, photoDim.w, photoDim.h);
-  } else {
-    ctx.fillStyle = "#cfc6b8";
-    ctx.fillRect(photoX, photoY, photoDim.w, photoDim.h);
   }
   ctx.restore();
 
   // 3. Exif 文字與自由備註繪製
   const fontKey = $("#font").value || "sans";
   const font = FONTS[fontKey] || FONTS.sans;
-  const sizeBase = Number($("#size").value) || 14;
-  const fontSize = Math.round(sizeBase * (totalW / 360));
   const textColor = $("#color").value;
+
+  // 左右側分別計算獨立字體大小
+  const sizeLeftBase = Number($("#size-left").value) || 14;
+  const sizeRightBase = Number($("#size-right").value) || 14;
+  const fontSizeLeft = Math.round(sizeLeftBase * (totalW / 360));
+  const fontSizeRight = Math.round(sizeRightBase * (totalW / 360));
 
   ctx.fillStyle = textColor;
   ctx.textBaseline = "top";
 
   const captionY = photoY + photoDim.h + Math.round(bottomMargin * 0.18);
 
-  // 左側文字 (相機 & 鏡頭 & 自訂備註)
+  // 左側：相機、鏡頭、備註
   const leftX = photoX + (activeState.pos.left / 100) * photoDim.w;
-  const showExif = activeState.showExif === "on";
-  const camText = showExif ? (activeState.cam.trim() || "") : "";
-  const lensText = showExif ? activeState.lens.trim() : "";
+  const showCam = activeState.showCam === "on";
+  const camText = showCam ? (activeState.cam.trim() || "") : "";
+  const lensText = showCam ? activeState.lens.trim() : "";
   const noteText = activeState.noteText.trim();
 
   ctx.textAlign = "left";
   let currentY = captionY;
 
   if (camText) {
-    ctx.font = `700 ${fontSize}px ${font}`;
+    ctx.font = `700 ${fontSizeLeft}px ${font}`;
     ctx.fillText(camText, leftX, currentY);
-    currentY += fontSize + 6;
+    currentY += fontSizeLeft + 6;
   }
 
   if (lensText) {
-    ctx.font = `500 ${Math.round(fontSize * 0.82)}px ${font}`;
+    ctx.font = `500 ${Math.round(fontSizeLeft * 0.82)}px ${font}`;
     ctx.fillText(lensText, leftX, currentY);
-    currentY += Math.round(fontSize * 0.82) + 6;
+    currentY += Math.round(fontSizeLeft * 0.82) + 6;
   }
 
   if (noteText) {
-    ctx.font = `500 ${Math.round(fontSize * 0.95)}px ${font}`;
+    ctx.font = `500 ${Math.round(fontSizeLeft * 0.95)}px ${font}`;
     ctx.fillText(noteText, leftX, currentY);
   }
 
-  // 右側文字 (ISO / 光圈 / 快門)
-  if (showExif) {
+  // 右側：快門、光圈、ISO 參數
+  const showExp = activeState.showExp === "on";
+  if (showExp) {
     const rightX = photoX + photoDim.w - (activeState.pos.right / 100) * photoDim.w;
     const iso = activeState.iso.trim();
     const fnum = activeState.fnum.trim();
@@ -520,7 +570,7 @@ function drawAll() {
 
     if (expText) {
       ctx.textAlign = "right";
-      ctx.font = `700 ${fontSize}px ${font}`;
+      ctx.font = `700 ${fontSizeRight}px ${font}`;
       ctx.fillText(expText, rightX, captionY + 4);
     }
   }
@@ -683,41 +733,84 @@ async function processSingleFile(file) {
   return itemState;
 }
 
-async function loadFiles(files) {
-  const maxFiles = Array.from(files).slice(0, 5); // 限制最多 5 張
-  itemsList = [];
-  
-  for (const f of maxFiles) {
+// 支援「新增照片」與「替換/初始化照片」
+async function appendFiles(files) {
+  const maxAllowed = 5 - itemsList.length;
+  if (maxAllowed <= 0) {
+    alert("最多只能上傳 5 張照片！請先刪除部分照片再加入。");
+    return;
+  }
+
+  const filesToAdd = Array.from(files).slice(0, maxAllowed);
+  for (const f of filesToAdd) {
     const st = await processSingleFile(f);
     itemsList.push(st);
   }
 
   if (itemsList.length > 0) {
-    currentIndex = 0;
-    activeState = itemsList[0];
+    currentIndex = itemsList.length - filesToAdd.length; // 自動切到新新增的第一張
+    activeState = itemsList[currentIndex];
     renderThumbnails();
     syncUIFromState();
     drawAll();
   }
+}
 
-  $("#save-all").style.display = itemsList.length > 1 ? "block" : "none";
+// 刪除指定索引的照片
+function deletePhoto(idx, e) {
+  if (e) e.stopPropagation(); // 阻止觸發縮圖切換
+  
+  syncStateFromUI();
+  itemsList.splice(idx, 1);
+
+  if (itemsList.length === 0) {
+    activeState = createDefaultItemState();
+    currentIndex = 0;
+  } else {
+    if (currentIndex >= itemsList.length) {
+      currentIndex = itemsList.length - 1;
+    }
+    activeState = itemsList[currentIndex];
+  }
+
+  renderThumbnails();
+  syncUIFromState();
+  drawAll();
 }
 
 function renderThumbnails() {
   const container = $("#thumbList");
-  if (itemsList.length <= 1) {
+  const mainPickLabel = $("#mainPickLabel");
+
+  if (itemsList.length === 0) {
     container.style.display = "none";
+    mainPickLabel.style.display = "grid";
+    $("#save-all").style.display = "none";
     return;
   }
+
+  // 隱藏頂部大選圖按鈕，改由縮圖列控制
+  mainPickLabel.style.display = "none";
   container.style.display = "flex";
   container.innerHTML = "";
 
+  // 渲染圖片縮圖
   itemsList.forEach((st, idx) => {
     const div = document.createElement("div");
     div.className = "thumb-item" + (idx === currentIndex ? " active" : "");
+
     const img = document.createElement("img");
     img.src = st.thumbUrl;
     div.appendChild(img);
+
+    // 刪除按鈕 (✕)
+    const delBtn = document.createElement("div");
+    delBtn.className = "thumb-del";
+    delBtn.innerHTML = "✕";
+    delBtn.title = "刪除照片";
+    delBtn.onclick = (e) => deletePhoto(idx, e);
+    div.appendChild(delBtn);
+
     div.onclick = () => {
       syncStateFromUI();
       currentIndex = idx;
@@ -726,12 +819,32 @@ function renderThumbnails() {
       syncUIFromState();
       drawAll();
     };
+
     container.appendChild(div);
   });
+
+  // 如果小於 5 張，渲染加號 (+) 補充按鈕
+  if (itemsList.length < 5) {
+    const addBtn = document.createElement("div");
+    addBtn.className = "thumb-add";
+    addBtn.innerHTML = `+<input id="fileAdd" type="file" multiple accept="image/jpeg,image/png,image/heic,image/heif,image/*" />`;
+    
+    // 綁定加號點擊事件
+    const fileAddInput = addBtn.querySelector("input");
+    fileAddInput.addEventListener("change", e => {
+      if (e.target.files && e.target.files.length > 0) {
+        appendFiles(e.target.files).catch(err => alert(err.message || "讀取照片失敗"));
+      }
+    });
+
+    container.appendChild(addBtn);
+  }
+
+  $("#save-all").style.display = itemsList.length > 1 ? "block" : "none";
 }
 
 function exportCard() {
-  if (!activeState.source) { alert("先上傳照片"); return; }
+  if (!activeState || !activeState.source) { alert("先上傳照片"); return; }
   drawAll();
   flash();
   const canvas = $("#mainCanvas");
@@ -760,7 +873,6 @@ async function exportAllCards() {
     zip.file(`polaroid_${i + 1}.png`, blob);
   }
 
-  // 恢復當前選擇
   activeState = itemsList[currentIndex];
   drawAll();
 
@@ -772,17 +884,23 @@ async function exportAllCards() {
 }
 
 // 事件繫結
-["cam","lens","iso","fnum","shut","font","size","color","date-on","date-size","date-text","note-text"].forEach(id => {
+["cam","lens","iso","fnum","shut","font","size-left","size-right","color","date-on","date-size","date-text","note-text"].forEach(id => {
   $("#" + id).addEventListener("input", drawAll);
 });
 
-$("#show-exif").addEventListener("change", () => {
+$("#show-cam").addEventListener("change", () => {
+  toggleExifInputs();
+  drawAll();
+});
+
+$("#show-exp").addEventListener("change", () => {
   toggleExifInputs();
   drawAll();
 });
 
 document.querySelectorAll(".frames button").forEach(b => {
   b.onclick = () => {
+    if (!activeState) return;
     activeState.frameStyle = b.dataset.frame;
     document.querySelectorAll(".frames button").forEach(x => x.classList.toggle("on", x === b));
     if (activeState.frameStyle === "black") $("#color").value = "#f6efe4";
@@ -796,6 +914,7 @@ document.querySelectorAll(".frames button").forEach(b => {
 
 document.querySelectorAll("#ratios button").forEach(b => {
   b.onclick = () => {
+    if (!activeState) return;
     activeState.aspect = b.dataset.aspect;
     document.querySelectorAll("#ratios button").forEach(x => x.classList.toggle("on", x === b));
     activeState.crop = { z: 1, x: 0, y: 0 };
@@ -805,21 +924,23 @@ document.querySelectorAll("#ratios button").forEach(b => {
 
 document.querySelectorAll("#date-sides button").forEach(b => {
   b.onclick = () => {
+    if (!activeState) return;
     activeState.dateSide = b.dataset.side;
     document.querySelectorAll("#date-sides button").forEach(x => x.classList.toggle("on", x === b));
     drawAll();
   };
 });
 
-$("#reset").onclick = () => { activeState.pos = { left: 6, right: 6 }; activeState.datePos = 18; drawAll(); };
-$("#reset-crop").onclick = () => { activeState.crop = { z: 1, x: 0, y: 0 }; drawAll(); };
+$("#reset").onclick = () => { if (activeState) { activeState.pos = { left: 6, right: 6 }; activeState.datePos = 18; drawAll(); } };
+$("#reset-crop").onclick = () => { if (activeState) { activeState.crop = { z: 1, x: 0, y: 0 }; drawAll(); } };
 $("#save").onclick = exportCard;
 $("#save-all").onclick = exportAllCards;
 
 $("#file").addEventListener("change", e => {
   const files = e.target.files;
   if (files && files.length > 0) {
-    loadFiles(files).catch(err => alert(err.message || "讀取照片失敗"));
+    itemsList = []; // 清空並重新開始
+    appendFiles(files).catch(err => alert(err.message || "讀取照片失敗"));
   }
 });
 
@@ -849,7 +970,7 @@ $("#file").addEventListener("change", e => {
   };
 
   const down = e => {
-    if (!activeState.source) return;
+    if (!activeState || !activeState.source) return;
     
     if (e.touches && e.touches.length >= 2) {
       pinching = true;
@@ -891,7 +1012,7 @@ $("#file").addEventListener("change", e => {
   };
 
   const move = e => {
-    if (!mode) return;
+    if (!mode || !activeState) return;
     
     if (pinching && e.touches && e.touches.length >= 2) {
       e.preventDefault();
@@ -941,7 +1062,7 @@ $("#file").addEventListener("change", e => {
   window.addEventListener("touchend", up);
 
   canvas.addEventListener("wheel", e => {
-    if (!activeState.source) return;
+    if (!activeState || !activeState.source) return;
     e.preventDefault();
     activeState.crop.z = Math.max(1, Math.min(4, activeState.crop.z + (e.deltaY < 0 ? 0.08 : -0.08)));
     drawAll();
