@@ -12,173 +12,246 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root {
-      --sumi:#161311; --char:#2b2622; --paper:#f4eee4; --ink:#2a2218;
-      --cream:#f6efe4; --muted:#9b8f82; --fuji:#e60012; --line:rgba(255,255,255,.08);
+      --sumi:#141110; --char:#221e1a; --panel:#1c1815; --panel-2:#241f1b;
+      --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.16);
+      --paper:#f4eee4; --ink:#2a2218; --cream:#f2ece1; --muted:#96897a;
+      --fuji:#ff3b30; --fuji-dim:rgba(255,59,48,.16);
+      --r-lg:20px; --r-md:14px; --r-sm:10px;
       --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+      --header-h:60px;
     }
     * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    html,body { margin:0; background:#161311; color:var(--cream); font-family:"Noto Sans TC",sans-serif; }
+    html,body { margin:0; background:var(--sumi); color:var(--cream); font-family:"Noto Sans TC",sans-serif; }
+    body { min-height:100dvh; background:radial-gradient(ellipse 900px 520px at 50% -10%, #3a2c24, transparent), var(--sumi); }
     button,input,select,textarea { font:inherit; color:inherit; }
     button { cursor:pointer; }
+    a { color:inherit; }
+    :focus-visible { outline:2px solid var(--fuji); outline-offset:2px; }
+    @media (prefers-reduced-motion:reduce) { *{ animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+
+    /* 頂部列 */
     .top {
-      position:sticky; top:0; z-index:10;
-      padding:calc(12px + var(--safe-t)) 16px 12px;
-      display:flex; align-items:center; gap:10px;
-      background:color-mix(in srgb, var(--sumi) 82%, transparent);
-      backdrop-filter:blur(16px); border-bottom:1px solid var(--line);
+      position:sticky; top:0; z-index:20; min-height:var(--header-h);
+      padding:calc(10px + var(--safe-t)) 16px 10px;
+      display:flex; align-items:center; gap:12px;
+      background:color-mix(in srgb, var(--sumi) 88%, transparent);
+      backdrop-filter:blur(18px) saturate(1.1); border-bottom:1px solid var(--line);
     }
-    .brand { flex:1; }
-    .brand h1 { margin:0; font-family:"Noto Serif JP",serif; font-size:18px; letter-spacing:.16em; }
+    .brand { flex:1; min-width:0; }
+    .brand h1 { margin:0; font-family:"Noto Serif JP",serif; font-size:17px; letter-spacing:.14em; }
+    .image-status {
+      flex:none; padding:6px 12px; border:1px solid var(--line); border-radius:999px;
+      color:var(--muted); font-size:12px; white-space:nowrap; background:rgba(255,255,255,.03);
+    }
     .pbtn {
-      border:0; min-height:40px; padding:0 14px; border-radius:999px;
-      background:var(--paper); color:var(--ink); font-weight:700; text-decoration:none;
-      display:inline-grid; place-items:center; text-align:center;
+      border:0; min-height:40px; padding:0 16px; border-radius:999px;
+      background:var(--paper); color:var(--ink); font-weight:700; font-size:14px;
+      text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+      gap:6px; white-space:nowrap; transition:transform .15s, box-shadow .15s, opacity .15s;
     }
-    .pbtn.red { background:var(--fuji); color:#fff; }
-    .pbtn.ghost { background:transparent; color:var(--cream); box-shadow:inset 0 0 0 1px var(--line); }
+    .pbtn:active { transform:scale(.96); }
+    .pbtn.red { background:var(--fuji); color:#fff; box-shadow:0 10px 22px rgba(255,59,48,.28); }
+    .pbtn.ghost { background:rgba(255,255,255,.05); color:var(--cream); box-shadow:inset 0 0 0 1px var(--line); }
     .pbtn.full { width:100%; }
-    .wrap { padding:16px; max-width:760px; margin:0 auto; padding-bottom:calc(32px + var(--safe-b)); }
-    
+    .pbtn.sm { min-height:36px; padding:0 12px; font-size:13px; }
+
+    .wrap { max-width:1160px; margin:0 auto; padding:18px 16px calc(32px + var(--safe-b)); }
+
+    .editor-shell { display:flex; flex-direction:column; gap:16px; }
+
+    /* 面板共用底 */
+    .setup-panel, .control-panel, .sync-box {
+      background:linear-gradient(160deg, var(--panel-2), var(--panel));
+      border:1px solid var(--line); border-radius:var(--r-lg);
+    }
+    .setup-panel { padding:16px; }
+    .section-heading { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 12px; }
+    .section-heading h3 { margin:0; font-size:14px; font-weight:700; letter-spacing:.02em; }
+    .section-heading p { margin:0; color:var(--muted); font-size:12px; }
+
+    /* 選圖 */
     .pick {
       position:relative; display:grid; place-items:center;
-      width:100%; min-height:48px; margin-bottom:14px;
-      border:0; border-radius:999px; background:var(--paper); color:var(--ink);
-      font-weight:700;
+      width:100%; min-height:52px; margin:0 0 12px;
+      border:0; border-radius:var(--r-md); background:var(--paper); color:var(--ink);
+      font-weight:700; font-size:14px; transition:transform .15s, box-shadow .15s;
     }
+    .pick:hover { transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,.25); }
     .pick input {
       position:absolute; inset:0; width:100%; height:100%;
       opacity:0; margin:0; cursor:pointer; font-size:16px;
     }
 
-    /* 縮圖列與刪除/新增按鈕樣式 */
+    /* 縮圖列 */
     .thumb-list {
-      display:flex; gap:10px; overflow-x:auto; padding:8px 0; margin-bottom:10px; align-items:center;
+      display:flex; gap:10px; overflow-x:auto; padding:2px 2px 6px; margin:0 0 4px;
+      scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;
     }
+    .thumb-list::-webkit-scrollbar { height:4px; }
+    .thumb-list::-webkit-scrollbar-thumb { background:var(--line-strong); border-radius:4px; }
     .thumb-item {
-      width:64px; height:64px; border-radius:8px; border:2px solid transparent;
+      width:60px; height:60px; border-radius:12px; border:2px solid transparent;
       overflow:visible; cursor:pointer; flex-shrink:0; position:relative; background:#222;
+      scroll-snap-align:start; transition:border-color .15s;
     }
-    .thumb-item img { width:100%; height:100%; object-fit:cover; border-radius:6px; }
+    .thumb-item img { width:100%; height:100%; object-fit:cover; border-radius:9px; display:block; }
     .thumb-item.active { border-color:var(--fuji); }
-    
-    /* 刪除小按鈕 (✕) */
     .thumb-del {
       position:absolute; top:-6px; right:-6px; width:20px; height:20px;
-      border-radius:50%; background:var(--fuji); color:#fff; border:1.5px solid #161311;
-      font-size:12px; font-weight:bold; display:grid; place-items:center;
-      line-height:1; cursor:pointer; z-index:2;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      border-radius:50%; background:var(--fuji); color:#fff; border:2px solid var(--sumi);
+      font-size:11px; font-weight:bold; display:grid; place-items:center;
+      line-height:1; cursor:pointer; z-index:2; box-shadow:0 2px 6px rgba(0,0,0,.4);
     }
-    .thumb-del:hover { transform: scale(1.1); }
-
-    /* 補加照片 (+) 按鈕 */
+    .thumb-del:hover { transform:scale(1.12); }
     .thumb-add {
-      width:64px; height:64px; border-radius:8px; border:2px dashed var(--muted);
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      width:60px; height:60px; border-radius:12px; border:2px dashed var(--line-strong);
+      display:flex; align-items:center; justify-content:center;
       color:var(--muted); font-size:20px; font-weight:bold; flex-shrink:0; position:relative;
-      background:rgba(255,255,255,0.03); cursor:pointer;
+      background:rgba(255,255,255,.02); cursor:pointer; transition:border-color .15s, color .15s;
     }
-    .thumb-add input {
-      position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;
-    }
-    .thumb-add:hover { border-color:var(--cream); color:var(--cream); }
+    .thumb-add input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+    .thumb-add:hover { border-color:var(--fuji); color:var(--cream); }
 
-    .stage { display:grid; place-items:center; margin:8px 0 16px; }
-    .polaroid-container {
-      width:min(90vw, 440px);
-      box-shadow:0 18px 40px rgba(0,0,0,.45);
-      animation:drop .55s cubic-bezier(.2,1.1,.3,1);
-      overflow:hidden;
-      border-radius:4px;
-      background-image: 
-        linear-gradient(45deg, #222 25%, transparent 25%), 
-        linear-gradient(-45deg, #222 25%, transparent 25%), 
-        linear-gradient(45deg, transparent 75%, #222 75%), 
-        linear-gradient(-45deg, transparent 75%, #222 75%);
-      background-size: 16px 16px;
-      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
-    }
-    #mainCanvas {
-      width:100%;
-      height:auto;
-      display:block;
-      cursor:grab;
-      touch-action:none;
-      user-select:none;
-    }
-    .form { display:grid; gap:10px; }
-    label.field { display:grid; gap:6px; font-size:12px; color:var(--muted); }
-    .field input,.field select,.field textarea {
-      width:100%; border:0; background:var(--char); border-radius:12px; padding:11px 12px;
-      box-shadow:inset 0 0 0 1px var(--line); outline:none;
-    }
-    .field input[type="color"] {
-      height:52px; min-height:52px; padding:6px; border-radius:14px;
-    }
-    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
-    .sync-box { display:grid; grid-template-columns:1.5fr 1fr; gap:8px; align-items:end; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 12px; border: 1px solid var(--line); }
+    .setup-help { margin:8px 1px 0; }
     .hint { color:var(--muted); font-size:12px; line-height:1.6; }
-    .ratios { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:10px 0; }
-    .ratios button, .sides button {
-      border:0; min-height:42px; border-radius:12px; font-weight:700; font-size:13px;
+
+    .preset-grid { display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-top:16px; padding-top:14px; border-top:1px solid var(--line); }
+    .preset-label { display:block; margin:0 0 8px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.03em; }
+    .frames, .ratios { display:grid; gap:6px; margin:0; }
+    .frames { grid-template-columns:repeat(5,1fr); }
+    .ratios { grid-template-columns:repeat(4,1fr); }
+    .frames button, .ratios button, .sides button {
+      border:0; min-height:40px; border-radius:var(--r-sm); font-weight:700; font-size:12.5px; padding:2px 4px;
       background:var(--char); color:var(--cream); box-shadow:inset 0 0 0 1px var(--line);
+      transition:transform .12s, box-shadow .12s;
     }
-    .ratios button.on, .sides button.on { outline:2px solid #e60012; }
-    .sides { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .frames { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
-    .frames button { border:0; min-height:42px; border-radius:10px; font-weight:700; font-size:12px; padding:2px; }
     .frames .w { background:#f7f3ec; color:#2a2218; }
     .frames .k { background:#111; color:#f6efe4; box-shadow:inset 0 0 0 1px #444; }
     .frames .t { background:linear-gradient(90deg,#8a6a4a,#5a4032); color:#fff; }
-    .frames .v { background:#e8dfcb; color:#4a3b2c; border:1px dashed #a89f8b; }
-    .frames .f { background:#0d0d0d; color:#e09f3e; border:1px solid #e09f3e; }
-    .frames button.on { outline:2px solid #e60012; }
-    .action-group { display:grid; gap:8px; margin-top:4px; }
+    .frames .v { background:#e8dfcb; color:#4a3b2c; box-shadow:inset 0 0 0 1px #a89f8b; }
+    .frames .f { background:#0d0d0d; color:#e09f3e; box-shadow:inset 0 0 0 1px #e09f3e; }
+    .frames button.on, .ratios button.on, .sides button.on { box-shadow:inset 0 0 0 2px var(--fuji), 0 0 0 3px var(--fuji-dim); }
+    .frames button:active, .ratios button:active, .sides button:active, .pbtn:active { transform:scale(.96); }
+    .sides { grid-template-columns:1fr 1fr; }
+
+    /* 預覽舞台 */
+    .stage { display:grid; place-items:center; padding:16px; border-radius:var(--r-lg); background:rgba(0,0,0,.18); border:1px solid var(--line); }
+    .polaroid-container {
+      width:min(100%, 480px);
+      box-shadow:0 20px 44px rgba(0,0,0,.5);
+      animation:drop .5s cubic-bezier(.2,1.1,.3,1);
+      overflow:hidden; border-radius:6px;
+      background-image:
+        linear-gradient(45deg, #222 25%, transparent 25%),
+        linear-gradient(-45deg, #222 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #222 75%),
+        linear-gradient(-45deg, transparent 75%, #222 75%);
+      background-size:16px 16px;
+      background-position:0 0, 0 8px, 8px -8px, -8px 0px;
+    }
+    #mainCanvas { width:100%; height:auto; display:block; cursor:grab; touch-action:none; user-select:none; }
+    @keyframes drop { from { opacity:0; transform:translateY(-18px) rotate(-4deg);} to { opacity:1; transform:none;} }
+
+    /* 表單欄位 */
+    .form { display:flex; flex-direction:column; gap:14px; }
+    label.field { display:grid; gap:6px; font-size:12px; font-weight:600; color:var(--muted); }
+    .field input, .field select, .field textarea {
+      width:100%; min-height:44px; border:0; background:var(--char); border-radius:var(--r-sm); padding:10px 12px;
+      box-shadow:inset 0 0 0 1px var(--line); outline:none; font-size:14px; color:var(--cream);
+      transition:box-shadow .15s, background .15s;
+    }
+    .field input:focus, .field select:focus { background:var(--panel-2); box-shadow:inset 0 0 0 1px var(--fuji), 0 0 0 3px var(--fuji-dim); }
+    .field input[type="color"] { height:44px; min-height:44px; padding:5px; border-radius:var(--r-sm); cursor:pointer; }
+    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+
+    .sync-box { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end; padding:12px; }
+
+    .control-panel { padding:16px; display:grid; gap:12px; }
+    details.control-panel { padding:0; overflow:hidden; }
+    details.control-panel[open] { padding:16px; }
+    details.control-panel summary {
+      list-style:none; padding:16px; cursor:pointer; font-size:14px; font-weight:700;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    details.control-panel summary::-webkit-details-marker { display:none; }
+    details.control-panel summary::after { content:'⌄'; color:var(--muted); transition:transform .2s; font-size:16px; }
+    details.control-panel[open] summary { padding:0 0 13px; border-bottom:1px solid var(--line); margin-bottom:13px; }
+    details.control-panel[open] summary::after { transform:rotate(180deg); }
+
+    .action-group { display:flex; flex-direction:column; gap:8px; }
+    .action-group .pbtn { min-height:48px; }
+    .action-group > .row2:nth-of-type(2) { order:-1; }
+
     .shutter { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:40; }
     .shutter.go { animation:flash .42s ease; }
-    @keyframes drop { from { opacity:0; transform:translateY(-22px) rotate(-6deg);} to { opacity:1; transform:none;} }
     @keyframes flash { 0%{opacity:0} 20%{opacity:1} 100%{opacity:0} }
-  </style>
+
+    .editor-tip { margin:0; padding:0 2px; }
+
+    /* 桌面：兩欄配置，預覽固定在左側 */
+    @media (min-width:860px) {
+      .top { padding-inline:max(16px, calc((100vw - 1160px) / 2)); }
+      .editor-shell { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr); grid-template-rows:auto auto; gap:20px; align-items:start; }
+      .setup-panel { grid-column:1 / -1; grid-row:1; }
+      .stage { grid-column:1; grid-row:2; position:sticky; top:calc(var(--header-h) + 20px); }
+      .form { grid-column:2; grid-row:2; }
+      .editor-tip { grid-column:1 / -1; }
+    }
+
+    /* 手機：預覽固定在頂部，捲動時仍看得到即時成果 */
+    @media (max-width:859px) {
+      .stage {
+        order:-1; position:sticky; z-index:10;
+        top:calc(var(--header-h) + var(--safe-t) - 2px);
+        margin:0 -16px; border-radius:0 0 22px 22px; padding:12px 16px 14px;
+      }
+      .polaroid-container { width:min(78vw, 320px); }
+    }
+
+    @media (max-width:520px) {
+      .top { padding-inline:12px; }
+      .top .pbtn { min-height:36px; padding-inline:12px; font-size:13px; }
+      .wrap { padding:14px 12px calc(28px + var(--safe-b)); }
+      .stage { margin-inline:-12px; }
+      .image-status { padding:5px 10px; font-size:11px; }
+      .setup-panel, .control-panel { border-radius:16px; }
+      .preset-grid { grid-template-columns:1fr; gap:12px; }
+      .frames button { font-size:10.5px; }
+      .row2 { gap:7px; }
+      .sync-box { grid-template-columns:1fr; }
+    }
+</style>
 </head>
 <body>
   <div class="shutter" id="shutter"></div>
   <header class="top">
     <a class="pbtn ghost" href="./">返回</a>
     <div class="brand"><h1>拍立得</h1></div>
+    <span class="image-status" id="imageStatus">尚未選取照片</span>
   </header>
   <div class="wrap">
-    <label class="pick" id="mainPickLabel">選擇照片 (最多 5 張)
-      <input id="file" type="file" multiple accept="image/jpeg,image/png,image/heic,image/heif,image/*" />
-    </label>
-    
-    <!-- 批量圖片選擇縮圖列 -->
-    <div class="thumb-list" id="thumbList" style="display:none;"></div>
-
-    <p class="hint">iPhone 選圖後若有「加入／完成」請按下去。可點擊縮圖刪除或切換編輯。</p>
-    
-    <div class="frames">
-      <button class="w on" data-frame="white">白框</button>
-      <button class="k" data-frame="black">黑框</button>
-      <button class="t" data-frame="tint">取色半透明</button>
-      <button class="v" data-frame="vintage">復古黃紙</button>
-      <button class="f" data-frame="film">經典底片</button>
-    </div>
-    
-    <div class="ratios" id="ratios">
-      <button class="on" data-aspect="orig">原圖</button>
-      <button data-aspect="mini">Mini</button>
-      <button data-aspect="square">方框</button>
-      <button data-aspect="wide">Wide</button>
-    </div>
-    
-    <div class="stage">
-      <div class="polaroid-container">
-        <canvas id="mainCanvas"></canvas>
+    <main class="editor-shell">
+      <section class="setup-panel">
+        <div class="section-heading"><h3>照片與版型</h3><p>最多 5 張</p></div>
+        <label class="pick" id="mainPickLabel">選擇照片
+          <input id="file" type="file" multiple accept="image/jpeg,image/png,image/heic,image/heif,image/*" />
+        </label>
+        <div class="thumb-list" id="thumbList" style="display:none;"></div>
+        <p class="hint setup-help">iPhone 選圖後請按「加入／完成」；點縮圖可切換，右上角可刪除。</p>
+        <div class="preset-grid">
+          <div><span class="preset-label">邊框樣式</span><div class="frames">
+            <button class="w on" data-frame="white">白框</button><button class="k" data-frame="black">黑框</button><button class="t" data-frame="tint">取色</button><button class="v" data-frame="vintage">復古</button><button class="f" data-frame="film">底片</button>
+          </div></div>
+          <div><span class="preset-label">照片比例</span><div class="ratios" id="ratios">
+            <button class="on" data-aspect="orig">原圖</button><button data-aspect="mini">Mini</button><button data-aspect="square">方框</button><button data-aspect="wide">Wide</button>
+          </div></div>
+        </div>
+      </section>
+      <div class="stage">
+        <div class="polaroid-container"><canvas id="mainCanvas"></canvas></div>
       </div>
-    </div>
-    
-    <div class="form">
+      <div class="form">
       <!-- 特定照片同步設定區塊 -->
       <div class="sync-box" id="sync-container" style="display:none;">
         <label class="field">同步設定來源
@@ -187,7 +260,8 @@
         <button class="pbtn ghost" id="apply-sync-btn" style="border-color: var(--fuji); color: var(--fuji);">套用設定</button>
       </div>
 
-      <!-- 獨立開關區 -->
+      <section class="control-panel">
+        <div class="section-heading"><h3>文字資訊</h3><p>相機資料會自動帶入</p></div>
       <div class="row2">
         <label class="field">相機/鏡頭/備註 顯示
           <select id="show-cam">
@@ -216,7 +290,7 @@
         <label class="field">光圈<input id="fnum" placeholder="f/1.4"></label>
       </div>
       <label class="field" id="exif-row-3">快門<input id="shut" placeholder="1/250"></label>
-      
+
       <div class="row2">
         <label class="field">字型
           <select id="font">
@@ -251,7 +325,10 @@
           </select>
         </label>
       </div>
-      
+      </section>
+
+      <details class="control-panel">
+        <summary>日期戳與位置</summary>
       <div class="row2">
         <label class="field">日期戳
           <select id="date-on">
@@ -268,29 +345,30 @@
           </select>
         </label>
       </div>
-      
+
       <label class="field">日期<input id="date-text" placeholder="2026.09.07"></label>
       <div class="sides" id="date-sides">
         <button class="on" data-side="left">左側</button>
         <button data-side="right">右側</button>
       </div>
-      
-      <!-- 整合與優化後的按鈕區塊 -->
+      </details>
+
       <div class="action-group">
         <div class="row2">
-          <button class="pbtn ghost" id="reset">重設文字位置</button>
-          <button class="pbtn ghost" id="reset-crop">重設照片裁切</button>
+          <button class="pbtn ghost sm" id="reset">重設文字位置</button>
+          <button class="pbtn ghost sm" id="reset-crop">重設照片裁切</button>
         </div>
-        
+
         <div class="row2">
           <button class="pbtn red" id="share">分享此張 (IG/LINE)</button>
           <button class="pbtn ghost" id="save">下載此張</button>
         </div>
-        
+
         <button class="pbtn ghost full" id="save-all" style="display:none;">打包下載全部 (ZIP)</button>
       </div>
-    </div>
-    <p class="hint">拖動照片調整裁切，電腦可用滾輪縮放。可直接在畫面上拖動文字與日期位置。</p>
+      </div>
+      <p class="hint editor-tip">拖曳照片可調整裁切；桌面版可用滾輪縮放。直接拖曳下方文字或側邊日期可調整位置。</p>
+    </main>
   </div>
 
 <script>
@@ -832,8 +910,10 @@ function deletePhoto(idx, e) {
 function renderThumbnails() {
   const container = $("#thumbList");
   const mainPickLabel = $("#mainPickLabel");
+  const imageStatus = $("#imageStatus");
 
   if (itemsList.length === 0) {
+    imageStatus.textContent = "尚未選取照片";
     container.style.display = "none";
     mainPickLabel.style.display = "grid";
     $("#save-all").style.display = "none";
@@ -841,6 +921,7 @@ function renderThumbnails() {
     return;
   }
 
+  imageStatus.textContent = `第 ${currentIndex + 1} 張／共 ${itemsList.length} 張`;
   mainPickLabel.style.display = "none";
   container.style.display = "flex";
   container.innerHTML = "";
