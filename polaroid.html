@@ -205,8 +205,22 @@
         order:-1; position:sticky; z-index:10;
         top:calc(var(--header-h) + var(--safe-t) - 2px);
         margin:0 -16px; border-radius:0 0 22px 22px; padding:12px 16px 14px;
+        display:flex; justify-content:center; align-items:center;
+        transition:padding .2s ease;
       }
-      .polaroid-container { width:min(78vw, 320px); }
+      /* 直式照片時改依「高度」縮放（由 JS 計算實際 px），避免預覽把畫面佔滿 */
+      .polaroid-container { width:auto; max-width:min(78vw, 320px); }
+      #mainCanvas { width:auto; height:auto; max-width:100%; display:block; }
+      .stage.collapsed { padding-top:6px; padding-bottom:6px; }
+      .stage.collapsed .polaroid-container { max-width:120px; }
+      .stage-toggle {
+        position:absolute; right:14px; bottom:8px; z-index:11;
+        width:30px; height:30px; border-radius:50%; border:0;
+        background:rgba(20,17,16,.72); color:var(--cream);
+        box-shadow:inset 0 0 0 1px var(--line-strong); backdrop-filter:blur(6px);
+        display:grid; place-items:center; font-size:13px; line-height:1;
+      }
+      .stage-toggle:active { transform:scale(.94); }
     }
 
     @media (max-width:520px) {
@@ -248,8 +262,9 @@
           </div></div>
         </div>
       </section>
-      <div class="stage">
+      <div class="stage" id="stage">
         <div class="polaroid-container"><canvas id="mainCanvas"></canvas></div>
+        <button type="button" class="stage-toggle" id="stageToggle" title="收合／展開預覽">﹀</button>
       </div>
       <div class="form">
       <!-- 特定照片同步設定區塊 -->
@@ -1261,6 +1276,59 @@ $("#file").addEventListener("change", e => {
     activeState.crop.z = Math.max(1, Math.min(4, activeState.crop.z + (e.deltaY < 0 ? 0.08 : -0.08)));
     drawAll();
   }, { passive: false });
+})();
+
+// 手機版：依「可用高度」而非單純寬度縮放預覽，避免直式照片把畫面佔滿
+(function fitStagePreview() {
+  const stage = $("#stage");
+  const canvas = $("#mainCanvas");
+  const toggle = $("#stageToggle");
+  if (!stage || !canvas || !toggle) return;
+
+  function isMobile() { return window.innerWidth <= 859; }
+
+  function apply() {
+    if (!isMobile()) {
+      canvas.style.width = "";
+      canvas.style.height = "";
+      return;
+    }
+    if (!canvas.width || !canvas.height) return;
+
+    const collapsed = stage.classList.contains("collapsed");
+    const maxW = Math.min(window.innerWidth * 0.78, 320);
+    // 收合時只留一小條，展開時最多用掉約 40% 的視窗高度
+    const maxH = collapsed ? 92 : Math.max(160, window.innerHeight * 0.4);
+    const ratio = canvas.width / canvas.height;
+
+    let w = maxW;
+    let h = w / ratio;
+    if (h > maxH) { h = maxH; w = h * ratio; }
+
+    canvas.style.width = Math.round(w) + "px";
+    canvas.style.height = Math.round(h) + "px";
+  }
+
+  toggle.addEventListener("click", () => {
+    stage.classList.toggle("collapsed");
+    toggle.textContent = stage.classList.contains("collapsed") ? "﹁" : "﹀";
+    apply();
+  });
+
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(apply, 80);
+  });
+  window.addEventListener("orientationchange", () => setTimeout(apply, 150));
+
+  const origDrawAll = drawAll;
+  drawAll = function (...args) {
+    origDrawAll.apply(this, args);
+    apply();
+  };
+
+  apply();
 })();
 
 drawAll();
