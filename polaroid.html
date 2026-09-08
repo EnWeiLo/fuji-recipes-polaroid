@@ -36,7 +36,7 @@
     }
     .pbtn.red { background:var(--fuji); color:#fff; }
     .pbtn.ghost { background:transparent; color:var(--cream); box-shadow:inset 0 0 0 1px var(--line); }
-    .pbtn.full { width:100%; margin-top:6px; }
+    .pbtn.full { width:100%; }
     .wrap { padding:16px; max-width:760px; margin:0 auto; padding-bottom:calc(32px + var(--safe-b)); }
     
     .pick {
@@ -134,6 +134,7 @@
     .frames .v { background:#e8dfcb; color:#4a3b2c; border:1px dashed #a89f8b; }
     .frames .f { background:#0d0d0d; color:#e09f3e; border:1px solid #e09f3e; }
     .frames button.on { outline:2px solid #e60012; }
+    .action-group { display:grid; gap:8px; margin-top:4px; }
     .shutter { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:40; }
     .shutter.go { animation:flash .42s ease; }
     @keyframes drop { from { opacity:0; transform:translateY(-22px) rotate(-6deg);} to { opacity:1; transform:none;} }
@@ -274,10 +275,20 @@
         <button data-side="right">右側</button>
       </div>
       
-      <button class="pbtn ghost full" id="reset">重設文字位置</button>
-      <button class="pbtn ghost full" id="reset-crop">重設裁切</button>
-      <button class="pbtn red full" id="save">下載當前拍立得</button>
-      <button class="pbtn ghost full" id="save-all" style="display:none;">打包下載全部 (ZIP/批量)</button>
+      <!-- 整合與優化後的按鈕區塊 -->
+      <div class="action-group">
+        <div class="row2">
+          <button class="pbtn ghost" id="reset">重設文字位置</button>
+          <button class="pbtn ghost" id="reset-crop">重設照片裁切</button>
+        </div>
+        
+        <div class="row2">
+          <button class="pbtn red" id="share">分享此張 (IG/LINE)</button>
+          <button class="pbtn ghost" id="save">下載此張</button>
+        </div>
+        
+        <button class="pbtn ghost full" id="save-all" style="display:none;">打包下載全部 (ZIP)</button>
+      </div>
     </div>
     <p class="hint">拖動照片調整裁切，電腦可用滾輪縮放。可直接在畫面上拖動文字與日期位置。</p>
   </div>
@@ -368,7 +379,6 @@ function createDefaultItemState() {
     datePos: 18,
     cam: "", lens: "", iso: "", fnum: "", shut: "", dateText: "",
     noteText: "", showCam: "on", showExp: "on",
-    // 獨立字型與樣式設定
     font: "sans",
     color: "#2c261e",
     sizeLeft: "14",
@@ -391,8 +401,6 @@ function syncStateFromUI() {
   activeState.noteText = $("#note-text").value;
   activeState.showCam = $("#show-cam").value;
   activeState.showExp = $("#show-exp").value;
-  
-  // 字型與日期相關設定
   activeState.font = $("#font").value;
   activeState.color = $("#color").value;
   activeState.sizeLeft = $("#size-left").value;
@@ -412,8 +420,6 @@ function syncUIFromState() {
   $("#note-text").value = activeState.noteText || "";
   $("#show-cam").value = activeState.showCam || "on";
   $("#show-exp").value = activeState.showExp || "on";
-
-  // 字型與日期相關 UI 更新
   $("#font").value = activeState.font || "sans";
   $("#color").value = activeState.color || "#2c261e";
   $("#size-left").value = activeState.sizeLeft || "14";
@@ -438,7 +444,6 @@ function toggleExifInputs() {
   $("#exif-row-3").style.display = showExp ? "grid" : "none";
 }
 
-// 更新「同步來源」下拉選單
 function updateSyncSelectOptions() {
   const syncContainer = $("#sync-container");
   const select = $("#sync-source-select");
@@ -510,7 +515,6 @@ function drawAll() {
     return;
   }
 
-  // 1. 背景與邊框繪製
   const frameStyle = activeState.frameStyle;
   if (frameStyle === "black") {
     ctx.fillStyle = "#111111";
@@ -555,7 +559,6 @@ function drawAll() {
     ctx.fillRect(0, 0, totalW, totalH);
   }
 
-  // 2. 照片區域繪製
   const photoX = sideMargin;
   const photoY = sideMargin;
   
@@ -571,12 +574,10 @@ function drawAll() {
   }
   ctx.restore();
 
-  // 3. Exif 文字與自由備註繪製
   const fontKey = $("#font").value || "sans";
   const font = FONTS[fontKey] || FONTS.sans;
   const textColor = $("#color").value;
 
-  // 左右側分別計算獨立字體大小
   const sizeLeftBase = Number($("#size-left").value) || 14;
   const sizeRightBase = Number($("#size-right").value) || 14;
   const fontSizeLeft = Math.round(sizeLeftBase * (totalW / 360));
@@ -587,7 +588,6 @@ function drawAll() {
 
   const captionY = photoY + photoDim.h + Math.round(bottomMargin * 0.18);
 
-  // 左側：相機、鏡頭、備註
   const leftX = photoX + (activeState.pos.left / 100) * photoDim.w;
   const showCam = activeState.showCam === "on";
   const camText = showCam ? (activeState.cam.trim() || "") : "";
@@ -614,7 +614,6 @@ function drawAll() {
     ctx.fillText(noteText, leftX, currentY);
   }
 
-  // 右側：快門、光圈、ISO 參數
   const showExp = activeState.showExp === "on";
   if (showExp) {
     const rightX = photoX + photoDim.w - (activeState.pos.right / 100) * photoDim.w;
@@ -630,7 +629,6 @@ function drawAll() {
     }
   }
 
-  // 4. 直書日期戳記繪製
   const dateOn = $("#date-on").value === "on" && (activeState.dateText || "").trim();
   if (dateOn) {
     const ds = (activeState.dateText || "").trim();
@@ -788,7 +786,6 @@ async function processSingleFile(file) {
   return itemState;
 }
 
-// 支援「新增照片」與「替換/初始化照片」
 async function appendFiles(files) {
   const maxAllowed = 5 - itemsList.length;
   if (maxAllowed <= 0) {
@@ -803,7 +800,7 @@ async function appendFiles(files) {
   }
 
   if (itemsList.length > 0) {
-    currentIndex = itemsList.length - filesToAdd.length; // 自動切到新新增的第一張
+    currentIndex = itemsList.length - filesToAdd.length;
     activeState = itemsList[currentIndex];
     renderThumbnails();
     syncUIFromState();
@@ -811,9 +808,8 @@ async function appendFiles(files) {
   }
 }
 
-// 刪除指定索引的照片
 function deletePhoto(idx, e) {
-  if (e) e.stopPropagation(); // 阻止觸發縮圖切換
+  if (e) e.stopPropagation();
   
   syncStateFromUI();
   itemsList.splice(idx, 1);
@@ -845,12 +841,10 @@ function renderThumbnails() {
     return;
   }
 
-  // 隱藏頂部大選圖按鈕，改由縮圖列控制
   mainPickLabel.style.display = "none";
   container.style.display = "flex";
   container.innerHTML = "";
 
-  // 渲染圖片縮圖
   itemsList.forEach((st, idx) => {
     const div = document.createElement("div");
     div.className = "thumb-item" + (idx === currentIndex ? " active" : "");
@@ -859,7 +853,6 @@ function renderThumbnails() {
     img.src = st.thumbUrl;
     div.appendChild(img);
 
-    // 刪除按鈕 (✕)
     const delBtn = document.createElement("div");
     delBtn.className = "thumb-del";
     delBtn.innerHTML = "✕";
@@ -879,13 +872,11 @@ function renderThumbnails() {
     container.appendChild(div);
   });
 
-  // 如果小於 5 張，渲染加號 (+) 補充按鈕
   if (itemsList.length < 5) {
     const addBtn = document.createElement("div");
     addBtn.className = "thumb-add";
     addBtn.innerHTML = `+<input id="fileAdd" type="file" multiple accept="image/jpeg,image/png,image/heic,image/heif,image/*" />`;
     
-    // 綁定加號點擊事件
     const fileAddInput = addBtn.querySelector("input");
     fileAddInput.addEventListener("change", e => {
       if (e.target.files && e.target.files.length > 0) {
@@ -910,6 +901,44 @@ function exportCard() {
     a.href = URL.createObjectURL(b);
     a.download = `polaroid_${currentIndex + 1}.png`;
     a.click();
+  }, "image/png");
+}
+
+// 快速分享當前照片 (支援 Web Share API，桌面降級為複製到剪貼簿)
+async function shareCard() {
+  if (!activeState || !activeState.source) { alert("先上傳照片"); return; }
+  drawAll();
+  flash();
+  const canvas = $("#mainCanvas");
+
+  canvas.toBlob(async function(blob) {
+    if (!blob) return;
+    const file = new File([blob], `polaroid_${currentIndex + 1}.png`, { type: "image/png" });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: "富士拍立得照片",
+          text: "分享我的富士相機拍立得！"
+        });
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          alert("分享時發生錯誤，改為直接下載照片。");
+          exportCard();
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ [blob.type]: blob })
+        ]);
+        alert("已將拍立得圖片複製到剪貼簿！可直接至 IG 限動或通訊軟體貼上。");
+      } catch (err) {
+        alert("目前瀏覽器不支援直接分享檔案，已為你下載圖片。");
+        exportCard();
+      }
+    }
   }, "image/png");
 }
 
@@ -940,7 +969,6 @@ async function exportAllCards() {
   a.click();
 }
 
-// 從特定照片複製設定至當前照片
 function applySyncFromSelectedPhoto() {
   const select = $("#sync-source-select");
   const targetIdx = Number(select.value);
@@ -949,25 +977,18 @@ function applySyncFromSelectedPhoto() {
 
   const targetState = itemsList[targetIdx];
 
-  // 1. 是否顯示相機/鏡頭/備註 與 快門/光圈/ISO
   activeState.showCam = targetState.showCam;
   activeState.showExp = targetState.showExp;
-
-  // 2. 備註內容
   activeState.noteText = targetState.noteText;
-
-  // 3. 時間戳的位子、開關與左右側
   activeState.dateOn = targetState.dateOn;
   activeState.datePos = targetState.datePos;
   activeState.dateSide = targetState.dateSide;
   activeState.dateSize = targetState.dateSize;
-
-  // 4. 顏色與字型大小相關
   activeState.color = targetState.color;
   activeState.font = targetState.font;
   activeState.sizeLeft = targetState.sizeLeft;
   activeState.sizeRight = targetState.sizeRight;
-  activeState.pos = { ...targetState.pos }; // 文字橫向位置同步
+  activeState.pos = { ...targetState.pos };
 
   syncUIFromState();
   drawAll();
@@ -1025,12 +1046,13 @@ $("#apply-sync-btn").onclick = applySyncFromSelectedPhoto;
 $("#reset").onclick = () => { if (activeState) { activeState.pos = { left: 6, right: 6 }; activeState.datePos = 18; drawAll(); } };
 $("#reset-crop").onclick = () => { if (activeState) { activeState.crop = { z: 1, x: 0, y: 0 }; drawAll(); } };
 $("#save").onclick = exportCard;
+$("#share").onclick = shareCard;
 $("#save-all").onclick = exportAllCards;
 
 $("#file").addEventListener("change", e => {
   const files = e.target.files;
   if (files && files.length > 0) {
-    itemsList = []; // 清空並重新開始
+    itemsList = [];
     appendFiles(files).catch(err => alert(err.message || "讀取照片失敗"));
   }
 });
