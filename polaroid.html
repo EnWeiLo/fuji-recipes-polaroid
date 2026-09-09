@@ -11,15 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Noto+Sans+TC:wght@400;600;700&family=Noto+Serif+JP:wght@600&family=Noto+Serif+TC:wght@600;700&family=Share+Tech+Mono&family=Zen+MaruGothic:wght@500;700&family=Kiwi+Maru:wght@500&family=Yuji+Syuku&display=swap" rel="stylesheet" />
   <script src="vendor/jszip.min.js"></script>
   <style>
-@font-face { font-family:"ChenYuluoyan"; src:url("fonts/ChenYuluoyan-2.0-Thin.ttf") format("truetype"); font-style:normal; font-weight:400; font-display:swap; }
+@font-face { font-family:"ChenYuluoyan"; src:url("fonts/ChenYuluoyan-2_0-Thin.ttf") format("truetype"); font-style:normal; font-weight:400; font-display:swap; }
 @font-face { font-family:"OpenHuninn"; src:url("fonts/jf-openhuninn-2.1.ttf") format("truetype"); font-style:normal; font-weight:400; font-display:swap; }
-@font-face { font-family:"GenRyuTWEL"; src:url("fonts/GenRyuMin2TW-EL.otf") format("opentype"); font-style:normal; font-weight:400; font-display:swap; }
-@font-face { font-family:"GenRyuTWL"; src:url("fonts/GenRyuMin2TW-L.otf") format("opentype"); font-style:normal; font-weight:400; font-display:swap; }
-@font-face { font-family:"GenRyuTWR"; src:url("fonts/GenRyuMin2TW-R.otf") format("opentype"); font-style:normal; font-weight:400; font-display:swap; }
-@font-face { font-family:"GenRyuTWM"; src:url("fonts/GenRyuMin2TW-M.otf") format("opentype"); font-style:normal; font-weight:400; font-display:swap; }
-@font-face { font-family:"GenRyuTWSB"; src:url("fonts/GenRyuMin2TW-SB.otf") format("opentype"); font-style:normal; font-weight:400; font-display:swap; }
-@font-face { font-family:"GenRyuTWB"; src:url("fonts/GenRyuMin2TW-B.otf") format("opentype"); font-style:normal; font-weight:400; font-display:swap; }
-@font-face { font-family:"GenRyuTWH"; src:url("fonts/GenRyuMin2TW-H.otf") format("opentype"); font-style:normal; font-weight:400; font-display:swap; }
     :root {
       --sumi:#141110; --char:#221e1a; --panel:#1c1815; --panel-2:#241f1b;
       --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.16);
@@ -336,14 +329,7 @@
             <option value="kiwi">溫潤明體 (Kiwi Maru)</option>
             <option value="yuji">懷舊墨楷 (Yuji Syuku)</option>
           <option value="chen">辰宇落雁 2.0（細體）</option>
-<option value="huninn">jf open 粉圓 2.1</option>
-<option value="genryu-el">源流明體 TW（極細）</option>
-<option value="genryu-l">源流明體 TW（細體）</option>
-<option value="genryu-r">源流明體 TW（標準）</option>
-<option value="genryu-m">源流明體 TW（中等）</option>
-<option value="genryu-sb">源流明體 TW（半粗）</option>
-<option value="genryu-b">源流明體 TW（粗體）</option>
-<option value="genryu-h">源流明體 TW（特粗）</option></select></label>
+<option value="huninn">jf open 粉圓 2.1</option></select></label>
         <label class="field">自訂備註字體大小<select id="note-size"><option value="12">小</option><option value="14" selected>中</option><option value="18">大</option><option value="22">特大</option></select></label>
       </div>
 
@@ -369,14 +355,7 @@
             <option value="kiwi">溫潤明體 (Kiwi Maru)</option>
             <option value="yuji">懷舊墨楷 (Yuji Syuku)</option>
           <option value="chen">辰宇落雁 2.0（細體）</option>
-<option value="huninn">jf open 粉圓 2.1</option>
-<option value="genryu-el">源流明體 TW（極細）</option>
-<option value="genryu-l">源流明體 TW（細體）</option>
-<option value="genryu-r">源流明體 TW（標準）</option>
-<option value="genryu-m">源流明體 TW（中等）</option>
-<option value="genryu-sb">源流明體 TW（半粗）</option>
-<option value="genryu-b">源流明體 TW（粗體）</option>
-<option value="genryu-h">源流明體 TW（特粗）</option></select>
+<option value="huninn">jf open 粉圓 2.1</option></select>
         </label>
         <label class="field">顏色<input id="color" type="color" value="#000000"></label>
       </div>
@@ -577,7 +556,7 @@ const FONTS = {
   yuji: '"Yuji Syuku", serif'
 };
 
-const LOCAL_FONTS={"chen":{"label":"辰宇落雁 2.0（細體）","family":"ChenYuluoyan"},"huninn":{"label":"jf open 粉圓 2.1","family":"OpenHuninn"},"genryu-el":{"label":"源流明體 TW（極細）","family":"GenRyuTWEL"},"genryu-l":{"label":"源流明體 TW（細體）","family":"GenRyuTWL"},"genryu-r":{"label":"源流明體 TW（標準）","family":"GenRyuTWR"},"genryu-m":{"label":"源流明體 TW（中等）","family":"GenRyuTWM"},"genryu-sb":{"label":"源流明體 TW（半粗）","family":"GenRyuTWSB"},"genryu-b":{"label":"源流明體 TW（粗體）","family":"GenRyuTWB"},"genryu-h":{"label":"源流明體 TW（特粗）","family":"GenRyuTWH"}};
+const LOCAL_FONTS={"chen":{"label":"辰宇落雁 2.0（細體）","family":"ChenYuluoyan"},"huninn":{"label":"jf open 粉圓 2.1","family":"OpenHuninn"}};
 Object.entries(LOCAL_FONTS).forEach(([key,value])=>{FONTS[key]='"'+value.family+'", sans-serif';});
 function textFont(key,size,weight=500) {
   return (LOCAL_FONTS[key] ? 400 : weight)+' '+size+'px '+(FONTS[key] || FONTS.sans);
