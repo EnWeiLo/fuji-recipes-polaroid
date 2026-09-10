@@ -1,0 +1,42 @@
+{
+  "alpha": {
+    "z5ii": {
+      "transparent": 440966,
+      "soft": 71306,
+      "red": 55722,
+      "white": 0
+    },
+    "z6": {
+      "transparent": 289160,
+      "soft": 57226,
+      "red": 0,
+      "white": 0
+    },
+    "xt50": {
+      "transparent": 469319,
+      "soft": 89631,
+      "red": 0,
+      "white": 0
+    }
+  },
+  "entries": [
+    {
+      "name": "polaroid_1.png",
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "name": "polaroid_2.png",
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "name": "polaroid_3.png",
+      "width": 1080,
+      "height": 1920
+    }
+  ],
+  "exportRestoresPreview": true,
+  "cacheCleanupScoped": true,
+  "errors": []
+}

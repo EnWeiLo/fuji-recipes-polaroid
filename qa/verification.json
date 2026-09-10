@@ -1,0 +1,550 @@
+{
+  "states": [
+    {
+      "brand": "NIKON",
+      "model": "Z5 II",
+      "phone": false,
+      "lens": "NIKKOR Z 24-70mm f/4 S",
+      "raw": {
+        "make": "NIKON CORPORATION",
+        "model": "NIKON Z5 II",
+        "lens": "NIKKOR Z 24-70mm f/4 S",
+        "iso": 800,
+        "fnum": 2.8,
+        "shut": 0.004,
+        "date": ""
+      },
+      "parts": [
+        {
+          "text": "NIKON",
+          "mark": "nikon"
+        },
+        {
+          "text": "Z5 II",
+          "mark": "z5ii"
+        }
+      ]
+    },
+    {
+      "brand": "NIKON",
+      "model": "Z6",
+      "phone": false,
+      "lens": "NIKKOR Z 40mm f/2",
+      "raw": {
+        "make": "NIKON CORPORATION",
+        "model": "niKoN : Z6",
+        "lens": "NIKKOR Z 40mm f/2",
+        "iso": 800,
+        "fnum": 2.8,
+        "shut": 0.004,
+        "date": ""
+      },
+      "parts": [
+        {
+          "text": "NIKON",
+          "mark": "nikon"
+        },
+        {
+          "text": "Z6",
+          "mark": "z6"
+        }
+      ]
+    },
+    {
+      "brand": "FUJIFILM",
+      "model": "X-T50",
+      "phone": false,
+      "lens": "XF 35mm F1.4 R",
+      "raw": {
+        "make": "FUJIFILM",
+        "model": "X-T50",
+        "lens": "XF 35mm F1.4 R",
+        "iso": 800,
+        "fnum": 2.8,
+        "shut": 0.004,
+        "date": ""
+      },
+      "parts": [
+        {
+          "text": "FUJIFILM",
+          "mark": "fujifilm"
+        },
+        {
+          "text": "X-T50",
+          "mark": "xt50"
+        }
+      ]
+    },
+    {
+      "brand": "Google",
+      "model": "Pixel 8 Pro",
+      "phone": true,
+      "lens": "Pixel back camera 2.23mm",
+      "raw": {
+        "make": "Google",
+        "model": "Pixel 8 Pro",
+        "lens": "Pixel back camera 2.23mm",
+        "iso": 800,
+        "fnum": 2.8,
+        "shut": 0.004,
+        "date": ""
+      },
+      "parts": [
+        {
+          "text": "Google",
+          "mark": null
+        },
+        {
+          "text": "Pixel 8 Pro",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "brand": "Apple",
+      "model": "iPhone 15 Pro",
+      "phone": true,
+      "lens": "iPhone back triple camera",
+      "raw": {
+        "make": "Apple",
+        "model": "iPhone 15 Pro",
+        "lens": "iPhone back triple camera",
+        "iso": 800,
+        "fnum": 2.8,
+        "shut": 0.004,
+        "date": ""
+      },
+      "parts": [
+        {
+          "text": "Apple",
+          "mark": null
+        },
+        {
+          "text": "iPhone 15 Pro",
+          "mark": null
+        }
+      ]
+    },
+    {
+      "brand": "SONY",
+      "model": "α7C II",
+      "phone": false,
+      "lens": "FE 24-105mm F4 G OSS",
+      "raw": {
+        "make": "SONY",
+        "model": "ILCE-7CM2",
+        "lens": "FE 24-105mm F4 G OSS",
+        "iso": 800,
+        "fnum": 2.8,
+        "shut": 0.004,
+        "date": ""
+      },
+      "parts": [
+        {
+          "text": "SONY",
+          "mark": "sony"
+        },
+        {
+          "text": "α7C II",
+          "mark": "alpha"
+        }
+      ]
+    },
+    {
+      "brand": "Unknown",
+      "model": "Camera",
+      "phone": false,
+      "lens": "Mystery lens",
+      "raw": {
+        "make": "Unknown",
+        "model": "Unknown Camera",
+        "lens": "Mystery lens",
+        "iso": "",
+        "fnum": "",
+        "shut": "",
+        "date": ""
+      },
+      "parts": [
+        {
+          "text": "Unknown",
+          "mark": null
+        },
+        {
+          "text": "Camera",
+          "mark": null
+        }
+      ]
+    }
+  ],
+  "perf": {
+    "events": 80,
+    "eventTotalMs": 0.3999999985098839,
+    "eventMeanMs": 0.004999999981373548,
+    "drawMeanMs": 0.45873015885433505,
+    "drawMaxMs": 1.200000001117587,
+    "burst": {
+      "sync": 0,
+      "exif": 0,
+      "phone": 0,
+      "normalize": 0,
+      "sample": 0,
+      "draw": 1
+    },
+    "counts": {
+      "sync": 0,
+      "exif": 0,
+      "phone": 0,
+      "normalize": 0,
+      "sample": 0,
+      "draw": 63
+    },
+    "final": "#2468ac",
+    "exactFinal": true
+  },
+  "before": {
+    "events": 80,
+    "totalMs": 1542.0999999996275,
+    "meanMs": 19.276249999995343,
+    "maxMs": 39.70000000111759
+  },
+  "fontMetrics": [
+    {
+      "key": "serif",
+      "level": 12,
+      "size": 12.4,
+      "height": 18,
+      "loaded": true
+    },
+    {
+      "key": "serif",
+      "level": 14,
+      "size": 14.5,
+      "height": 21,
+      "loaded": true
+    },
+    {
+      "key": "serif",
+      "level": 18,
+      "size": 18.6,
+      "height": 27,
+      "loaded": true
+    },
+    {
+      "key": "serif",
+      "level": 22,
+      "size": 22.7,
+      "height": 32,
+      "loaded": true
+    },
+    {
+      "key": "mono",
+      "level": 12,
+      "size": 13.4,
+      "height": 19,
+      "loaded": true
+    },
+    {
+      "key": "mono",
+      "level": 14,
+      "size": 15.6,
+      "height": 22,
+      "loaded": true
+    },
+    {
+      "key": "mono",
+      "level": 18,
+      "size": 20.1,
+      "height": 28,
+      "loaded": true
+    },
+    {
+      "key": "mono",
+      "level": 22,
+      "size": 24.6,
+      "height": 34,
+      "loaded": true
+    },
+    {
+      "key": "hand",
+      "level": 12,
+      "size": 16.2,
+      "height": 22,
+      "loaded": true
+    },
+    {
+      "key": "hand",
+      "level": 14,
+      "size": 18.7,
+      "height": 26,
+      "loaded": true
+    },
+    {
+      "key": "hand",
+      "level": 18,
+      "size": 23.8,
+      "height": 33,
+      "loaded": true
+    },
+    {
+      "key": "hand",
+      "level": 22,
+      "size": 29,
+      "height": 40,
+      "loaded": true
+    },
+    {
+      "key": "round",
+      "level": 12,
+      "size": 12.7,
+      "height": 18,
+      "loaded": true
+    },
+    {
+      "key": "round",
+      "level": 14,
+      "size": 14.8,
+      "height": 21,
+      "loaded": true
+    },
+    {
+      "key": "round",
+      "level": 18,
+      "size": 19,
+      "height": 28,
+      "loaded": true
+    },
+    {
+      "key": "round",
+      "level": 22,
+      "size": 23.2,
+      "height": 33,
+      "loaded": true
+    },
+    {
+      "key": "kiwi",
+      "level": 12,
+      "size": 12.6,
+      "height": 18,
+      "loaded": true
+    },
+    {
+      "key": "kiwi",
+      "level": 14,
+      "size": 14.7,
+      "height": 20,
+      "loaded": true
+    },
+    {
+      "key": "kiwi",
+      "level": 18,
+      "size": 18.9,
+      "height": 25,
+      "loaded": true
+    },
+    {
+      "key": "kiwi",
+      "level": 22,
+      "size": 23.1,
+      "height": 32,
+      "loaded": true
+    },
+    {
+      "key": "yuji",
+      "level": 12,
+      "size": 13.4,
+      "height": 19,
+      "loaded": true
+    },
+    {
+      "key": "yuji",
+      "level": 14,
+      "size": 15.5,
+      "height": 22,
+      "loaded": true
+    },
+    {
+      "key": "yuji",
+      "level": 18,
+      "size": 19.8,
+      "height": 28,
+      "loaded": true
+    },
+    {
+      "key": "yuji",
+      "level": 22,
+      "size": 24.1,
+      "height": 34,
+      "loaded": true
+    },
+    {
+      "key": "chen",
+      "level": 12,
+      "size": 20.4,
+      "height": 27,
+      "loaded": true
+    },
+    {
+      "key": "chen",
+      "level": 14,
+      "size": 23.1,
+      "height": 30,
+      "loaded": true
+    },
+    {
+      "key": "chen",
+      "level": 18,
+      "size": 29,
+      "height": 38,
+      "loaded": true
+    },
+    {
+      "key": "chen",
+      "level": 22,
+      "size": 35.2,
+      "height": 45,
+      "loaded": true
+    },
+    {
+      "key": "huninn",
+      "level": 12,
+      "size": 12,
+      "height": 17,
+      "loaded": true
+    },
+    {
+      "key": "huninn",
+      "level": 14,
+      "size": 14,
+      "height": 19,
+      "loaded": true
+    },
+    {
+      "key": "huninn",
+      "level": 18,
+      "size": 18,
+      "height": 25,
+      "loaded": true
+    },
+    {
+      "key": "huninn",
+      "level": 22,
+      "size": 22,
+      "height": 31,
+      "loaded": true
+    },
+    {
+      "key": "genryu-m",
+      "level": 12,
+      "size": 12.3,
+      "height": 18,
+      "loaded": true
+    },
+    {
+      "key": "genryu-m",
+      "level": 14,
+      "size": 14.4,
+      "height": 21,
+      "loaded": true
+    },
+    {
+      "key": "genryu-m",
+      "level": 18,
+      "size": 18.5,
+      "height": 27,
+      "loaded": true
+    },
+    {
+      "key": "genryu-m",
+      "level": 22,
+      "size": 22.6,
+      "height": 32,
+      "loaded": true
+    },
+    {
+      "key": "genryu-sb",
+      "level": 12,
+      "size": 12.2,
+      "height": 18,
+      "loaded": true
+    },
+    {
+      "key": "genryu-sb",
+      "level": 14,
+      "size": 14.2,
+      "height": 21,
+      "loaded": true
+    },
+    {
+      "key": "genryu-sb",
+      "level": 18,
+      "size": 18.3,
+      "height": 27,
+      "loaded": true
+    },
+    {
+      "key": "genryu-sb",
+      "level": 22,
+      "size": 22.4,
+      "height": 32,
+      "loaded": true
+    },
+    {
+      "key": "genryu-b",
+      "level": 12,
+      "size": 12.1,
+      "height": 18,
+      "loaded": true
+    },
+    {
+      "key": "genryu-b",
+      "level": 14,
+      "size": 14.1,
+      "height": 21,
+      "loaded": true
+    },
+    {
+      "key": "genryu-b",
+      "level": 18,
+      "size": 18.1,
+      "height": 27,
+      "loaded": true
+    },
+    {
+      "key": "genryu-b",
+      "level": 22,
+      "size": 22.2,
+      "height": 32,
+      "loaded": true
+    },
+    {
+      "key": "genryu-h",
+      "level": 12,
+      "size": 12,
+      "height": 18,
+      "loaded": true
+    },
+    {
+      "key": "genryu-h",
+      "level": 14,
+      "size": 14,
+      "height": 21,
+      "loaded": true
+    },
+    {
+      "key": "genryu-h",
+      "level": 18,
+      "size": 18,
+      "height": 27,
+      "loaded": true
+    },
+    {
+      "key": "genryu-h",
+      "level": 22,
+      "size": 22,
+      "height": 33,
+      "loaded": true
+    }
+  ],
+  "errors": [],
+  "checks": "EXIF fixtures, per-photo phone UI/render, source/presets/manual, fallback, 48 font sizes, responsive layout, exact final color, no import work during dragging, both navigation directions"
+}

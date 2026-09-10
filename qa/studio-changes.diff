@@ -1,0 +1,444 @@
+--- \\kensi_nas\homes\KenSi\拍立得模擬器\backups\2026-09-10-before-update\index.html
+
++++ \\kensi_nas\homes\KenSi\拍立得模擬器\polaroid.html
+
+@@ -9,5 +9,5 @@
+
+   <title>拍立得工作室</title>
+   <link rel="preconnect" href="https://fonts.googleapis.com" />
+-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Noto+Sans+TC:wght@400;600;700&family=Noto+Serif+JP:wght@600&family=Noto+Serif+TC:wght@600;700&family=Share+Tech+Mono&family=Zen+MaruGothic:wght@500;700&family=Kiwi+Maru:wght@500&family=Yuji+Syuku&display=swap" rel="stylesheet" />
++  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Noto+Sans+TC:wght@400;600;700&family=Noto+Serif+JP:wght@600&family=Noto+Serif+TC:wght@600;700&family=Share+Tech+Mono&family=Zen+Maru+Gothic:wght@500;700&family=Kiwi+Maru:wght@500&family=Yuji+Syuku&display=swap" rel="stylesheet" />
+   <script src="vendor/jszip.min.js"></script>
+   <style>
+@@ -255,9 +255,10 @@
+
+ .stage-toggle { display:none; }
+ @media(max-width:859px) { .stage-toggle { display:grid; } }
++.text-group{display:grid;gap:12px;border-top:1px solid var(--line);padding-top:14px;margin-top:4px}#text-settings>.section-heading{margin-bottom:0}.text-group .hint{margin:0}.text-group h4{margin:0;color:var(--cream);font-size:13px}.text-group .row2{margin:0;align-items:start}.camera-fields{display:grid;gap:10px;align-content:start}#exif-row-1{grid-template-columns:minmax(0,1fr);align-items:start}#text-settings .field{min-width:0}#text-settings .field input,#text-settings .field select{min-width:0;width:100%}@media(max-width:600px){#text-settings .row2{grid-template-columns:minmax(0,1fr)}.top{flex-wrap:wrap}.top .brand{min-width:140px}}
+ </style>
+ </head>
+ <body>
+   <div class="shutter" id="shutter"></div>
+-  <header class="top">
++  <header class="top"><a class="pbtn ghost sm" href="index.html">富士食譜工具</a>
+     <div class="brand"><h1>拍立得</h1></div>
+     <span class="image-status" id="imageStatus">尚未選取照片</span>
+@@ -294,26 +295,16 @@
+
+       </div>
+ 
+-      <section class="control-panel">
+-        <div class="section-heading"><h3>文字資訊</h3><p>相機資料會自動帶入</p></div>
+-      <div class="row2">
+-        <label class="field">相機品牌／型號／鏡頭 顯示
++<section class="control-panel" id="text-settings"><div class="section-heading"><h3>文字資訊</h3><p>相機資料會自動帶入</p></div><section class="text-group" ><h4>顯示內容</h4><div class="row2"><label class="field"><span id="camera-display-label">相機品牌／型號／鏡頭 顯示</span>
+           <select id="show-cam">
+             <option value="on" selected>開</option>
+             <option value="off">關</option>
+           </select>
+-        </label>
+-        <label class="field" id="exposure-display-field" style="display:none">快門／光圈／ISO 顯示
++        </label><label class="field" id="exposure-display-field" style="display:none">快門／光圈／ISO 顯示
+           <select id="show-exp" disabled><option value="on">顯示</option><option value="off" selected>不顯示</option>
+           </select>
+-        </label>
+-      </div>
+-
+-      <label class="field">自訂備註 / 標題
++        </label></div><label class="field">自訂備註 / 標題
+         <input id="note-text" placeholder="輸入隨想或地點...">
+-      </label>
+-      <p class="hint" id="note-layout-help" aria-live="polite"></p>
+-      <div class="row2">
+-        <label class="field">自訂備註字型<select id="note-font">
+-            <option value="sans">無襯線 (Noto Sans)</option>
++      </label><p class="hint" id="note-layout-help" aria-live="polite"></p></section><section class="text-group" id="exif-row-1"><h4>相機資料</h4><div class="row2"><div class="camera-fields"><label class="field">相機品牌來源<select id="camera-brand"><option value="auto">自動帶入</option><option value="none">不顯示</option><option value="sony">SONY</option><option value="canon">Canon</option><option value="nikon">NIKON</option><option value="fujifilm">FUJIFILM</option><option value="manual">手動輸入</option></select></label><label class="field" id="camera-brand-manual" style="display:none">手動輸入品牌<input id="camera-brand-text" placeholder="例如 FUJIFILM"></label></div><div class="camera-fields"><label class="field">相機型號來源<select id="camera-select"><option value="auto">自動帶入</option><option value="none">不顯示</option><option value="sony-a7cii">α7C II</option><option value="nikon-z5ii">Z5 II</option><option value="nikon-z6">Z6</option><option value="fuji-xt50">X-T50</option><option value="manual">手動輸入</option></select></label><label class="field" id="camera-manual-field" style="display:none">手動輸入型號<input id="cam" placeholder="例如 X-T50"></label></div></div><label class="field" id="lens-field">鏡頭<input id="lens" placeholder="XF35mmF1.4 R"></label></section><section class="text-group" ><h4>字體與外觀</h4><div class="row2"><label class="field">自訂備註字型<select id="note-font">
++            
+             <option value="serif">經典明體 (Noto Serif)</option>
+             <option value="mono">等寬數字 (Mono)</option>
+@@ -324,29 +315,13 @@
+
+           <option value="chen">辰宇落雁 2.0（細體）</option>
+ <option value="huninn">jf open 粉圓 2.1</option>
+-<option value="genryu-el">源流明體 TW（極細）</option>
+-<option value="genryu-l">源流明體 TW（細體）</option>
+-<option value="genryu-r">源流明體 TW（標準）</option>
++
++
++
+ <option value="genryu-m">源流明體 TW（中等）</option>
+ <option value="genryu-sb">源流明體 TW（半粗）</option>
+ <option value="genryu-b">源流明體 TW（粗體）</option>
+-<option value="genryu-h">源流明體 TW（特粗）</option></select></label>
+-        <label class="field">自訂備註字體大小<select id="note-size"><option value="12">小</option><option value="14" selected>中</option><option value="18">大</option><option value="22">特大</option></select></label>
+-      </div>
+-
+-      <div class="row2" id="exif-row-1">
+-        <div class="camera-fields" style="display:grid;gap:10px;align-content:start">
+-          <label class="field">相機品牌<select id="camera-brand"><option value="none">不顯示</option><option value="sony">SONY</option><option value="canon">Canon</option><option value="nikon">Nikon</option><option value="fujifilm">FUJIFILM</option><option value="manual">手動輸入</option></select></label>
+-          <label class="field" id="camera-brand-manual" style="display:none">手動輸入品牌<input id="camera-brand-text" placeholder="例如 FUJIFILM"></label>
+-          <label class="field">相機型號<select id="camera-select"><option value="none">不顯示</option><option value="sony-a7cii">α7C II</option><option value="manual">手動輸入</option></select></label>
+-          <label class="field" id="camera-manual-field" style="display:none">手動輸入型號<input id="cam" placeholder="例如 X-T50"></label>
+-        </div>
+-        <label class="field">鏡頭<input id="lens" placeholder="XF35mmF1.4 R"></label>
+-      </div>
+-
+-
+-      <div class="row2">
+-        <label class="field">相機／鏡頭字型
++<option value="genryu-h">源流明體 TW（特粗）</option></select></label><label class="field">自訂備註字體大小<select id="note-size"><option value="12">小</option><option value="14" selected>中</option><option value="18">大</option><option value="22">特大</option></select></label></div><div class="row2"><label class="field">相機／鏡頭字型
+           <select id="font">
+-            <option value="sans">無襯線 (Noto Sans)</option>
++            
+             <option value="serif">經典明體 (Noto Serif)</option>
+             <option value="mono">等寬數字 (Mono)</option>
+@@ -357,17 +332,12 @@
+
+           <option value="chen">辰宇落雁 2.0（細體）</option>
+ <option value="huninn">jf open 粉圓 2.1</option>
+-<option value="genryu-el">源流明體 TW（極細）</option>
+-<option value="genryu-l">源流明體 TW（細體）</option>
+-<option value="genryu-r">源流明體 TW（標準）</option>
++
++
++
+ <option value="genryu-m">源流明體 TW（中等）</option>
+ <option value="genryu-sb">源流明體 TW（半粗）</option>
+ <option value="genryu-b">源流明體 TW（粗體）</option>
+ <option value="genryu-h">源流明體 TW（特粗）</option></select>
+-        </label>
+-        <label class="field">顏色<input id="color" type="color" value="#000000"></label>
+-      </div>
+-
+-      <p class="hint" id="font-status" role="status" aria-live="polite" style="display:none"></p>
+-      <label class="field">相機／鏡頭／曝光資訊字體大小
++        </label><label class="field">顏色<input id="color" type="color" value="#000000"></label></div><label class="field">相機／鏡頭／曝光資訊字體大小
+         <select id="size-left">
+             <option value="12">小</option>
+@@ -376,7 +346,5 @@
+
+             <option value="22">特大</option>
+           </select>
+-      </label>
+-      </section>
+-
++      </label><p class="hint" id="font-status" role="status" aria-live="polite" style="display:none"></p></section></section>
+       <details class="control-panel">
+         <summary>日期戳與位置</summary>
+@@ -464,13 +432,35 @@
+
+  return {brand:'',model:normalizeCameraModel(raw)};
+ }
+-function normalizeCameraModel(model) {
+- return /^(?:ILCE-7CM2|α7C\s*II|a7c\s*ii)$/i.test(model.trim())?'α7C II':model.trim();
+-}
+-const CAMERA_BRANDS={sony:'SONY',canon:'Canon',nikon:'Nikon',fujifilm:'FUJIFILM'};
+-function cameraBrandKey(text){return Object.keys(CAMERA_BRANDS).find(key=>key===text.trim().toLowerCase())||'';}
+-function getCameraParts(st) {
+- const {brand,model}=getCameraIdentity(st);
+- return [{text:brand,mark:cameraBrandKey(brand)||null},{text:model,mark:/^α7C II$/i.test(normalizeCameraModel(model))?'alpha':null}].filter(part=>part.text);
+-}
++const CAMERA_BRANDS={sony:'SONY',canon:'Canon',nikon:'NIKON',fujifilm:'FUJIFILM'};
++const CAMERA_MODELS={'sony-a7cii':{text:'α7C II',mark:'alpha'},'nikon-z5ii':{text:'Z5 II',mark:'z5ii'},'nikon-z6':{text:'Z6',mark:'z6'},'fuji-xt50':{text:'X-T50',mark:'xt50'}};
++function normalizeBrand(value){const v=String(value||'').trim();return /^nikon(?:\s+corporation)?$/i.test(v)?'NIKON':v;}
++function normalizeCameraModel(value,brand=''){
++ let model=String(value||'').trim();
++ if(normalizeBrand(brand)==='NIKON')model=model.replace(/nikon(?:\s+corporation)?/gi,' ').replace(/^[\s:;,_/|–—-]+|[\s:;,_/|–—-]+$/g,'').replace(/\s+/g,' ').trim();
++ if(/^(?:ILCE-7CM2|α7C\s*II|a7c\s*ii)$/i.test(model))return 'α7C II';
++ if(/^Z\s*5\s*II$/i.test(model))return 'Z5 II';
++ if(/^Z\s*6$/i.test(model))return 'Z6';
++ if(/^X[ -]?T50$/i.test(model))return 'X-T50';return model;
++}
++function cameraBrandKey(text){return Object.keys(CAMERA_BRANDS).find(key=>key===normalizeBrand(text).toLowerCase())||'';}
++// Conservative paired make/model rules. Unknown devices retain lens behavior.
++const PHONE_RULES=[
++ [/^apple$/i,/^iphone\b/i], [/^google$/i,/^pixel\s*\d/i],
++ [/^samsung$/i,/^(?:SM-[AGSFMN]|GT-I|Galaxy\b)/i],
++ [/^(?:sony|sony mobile communications)$/i,/^(?:xperia\b|XQ-)/i],
++ [/^(?:xiaomi|redmi|poco)$/i,/^(?:Mi\s+\d|Redmi\b|POCO\b|Xiaomi\s+\d)/i],
++ [/^(?:huawei|honor)$/i,/^(?:HUAWEI|HONOR|VOG-|ELE-|LIO-|ANA-|NOH-|ELS-)/i],
++ [/^oneplus$/i,/^(?:ONEPLUS|CPH\d|LE21|NE22)/i],
++ [/^oppo$/i,/^(?:OPPO|CPH\d|Find\b|Reno\b)/i], [/^vivo$/i,/^(?:vivo|V\d{4})/i],
++ [/^motorola$/i,/^(?:moto\b|motorola\b)/i], [/^asus$/i,/^(?:ASUS_|Zenfone\b|ROG Phone\b)/i]
++];
++function isPhoneExif(meta){return PHONE_RULES.some(([make,model])=>make.test(String(meta.make||'').trim())&&model.test(String(meta.model||'').trim()));}
++function refreshCameraDisplay(st){
++ st.cameraBrand=normalizeBrand(st.cameraBrand);st.cameraModel=normalizeCameraModel(st.cameraModel,st.cameraBrand);
++ st.cam=[st.cameraBrand,st.cameraModel].filter(Boolean).join(' ');
++ const preset=Object.values(CAMERA_MODELS).find(x=>x.text===st.cameraModel);
++ st.cameraParts=[{text:st.cameraBrand,mark:cameraBrandKey(st.cameraBrand)||null},{text:st.cameraModel,mark:preset?.mark||null}].filter(x=>x.text);
++}
++function getCameraParts(st){return st.cameraParts||[];}
+ function drawCameraMark(ctx,mask,left,y,height,color) {
+  const width=height*mask.width/mask.height,scale=3,pad=6,c=document.createElement('canvas');
+@@ -480,4 +470,5 @@
+
+  g.globalCompositeOperation='source-in';g.fillStyle=color;g.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(c,left-pad/scale,y-pad/scale,c.width/scale,c.height/scale);
++ if(mask.accent)ctx.drawImage(mask.accent,left,y,width,height);
+ }
+ function drawCameraLine(ctx,parts,x,y,height,color,fontKey,maxWidth) {
+@@ -496,5 +487,11 @@
+
+  ctx.restore();
+ }
+-logoReady.then(()=>drawAll());
+[embedded logo data omitted]
++const modelLogoReady=Promise.all(['z5ii','z6','xt50'].map(key=>new Promise(resolve=>{const img=new Image();img.onload=()=>{
++ const mask=document.createElement('canvas'),accent=document.createElement('canvas');mask.width=accent.width=img.width;mask.height=accent.height=img.height;
++ const g=mask.getContext('2d');g.drawImage(img,0,0);const black=g.getImageData(0,0,img.width,img.height),red=new ImageData(img.width,img.height);
++ for(let i=0;i<black.data.length;i+=4){if(black.data[i]>100&&black.data[i]>black.data[i+1]*2){red.data.set(black.data.slice(i,i+4),i);black.data[i+3]=0;}else black.data[i]=black.data[i+1]=black.data[i+2]=0;}
++ g.putImageData(black,0,0);accent.getContext('2d').putImageData(red,0,0);mask.accent=accent;logoMasks[key]=mask;resolve();};img.onerror=()=>resolve();img.src=MODEL_LOGO_SOURCES[key]})));
++Promise.all([logoReady,modelLogoReady]).then(()=>drawAll(false));
+ 
+ // 快門音效
+@@ -566,4 +563,14 @@
+
+ const LOCAL_FONTS={"chen":{"label":"辰宇落雁 2.0（細體）","family":"ChenYuluoyan"},"huninn":{"label":"jf open 粉圓 2.1","family":"OpenHuninn"},"genryu-el":{"label":"源流明體 TW（極細）","family":"GenRyuTWEL"},"genryu-l":{"label":"源流明體 TW（細體）","family":"GenRyuTWL"},"genryu-r":{"label":"源流明體 TW（標準）","family":"GenRyuTWR"},"genryu-m":{"label":"源流明體 TW（中等）","family":"GenRyuTWM"},"genryu-sb":{"label":"源流明體 TW（半粗）","family":"GenRyuTWSB"},"genryu-b":{"label":"源流明體 TW（粗體）","family":"GenRyuTWB"},"genryu-h":{"label":"源流明體 TW（特粗）","family":"GenRyuTWH"}};
+ Object.entries(LOCAL_FONTS).forEach(([key,value])=>{FONTS[key]='"'+value.family+'", sans-serif';});
++const REMOVED_FONTS=new Set(['sans','genryu-el','genryu-l','genryu-r']);
++function usableFont(key){return key&&FONTS[key]&&!REMOVED_FONTS.has(key)?key:'huninn';}
++const FONT_SIZE_PROFILES={
++ huninn:[12,14,18,22],serif:[12.4,14.5,18.6,22.7],mono:[13.4,15.6,20.1,24.6],
++ hand:[16.2,18.7,23.8,29.0],round:[12.7,14.8,19.0,23.2],kiwi:[12.6,14.7,18.9,23.1],
++ yuji:[13.4,15.5,19.8,24.1],chen:[20.4,23.1,29.0,35.2],
++ 'genryu-m':[12.3,14.4,18.5,22.6],'genryu-sb':[12.2,14.2,18.3,22.4],
++ 'genryu-b':[12.1,14.1,18.1,22.2],'genryu-h':[12,14,18,22]
++};
++function fontSizeFor(key,level){const i=[12,14,18,22].indexOf(Number(level));return FONT_SIZE_PROFILES[key]?.[i<0?1:i]||Number(level)||14;}
+ function textFont(key,size,weight=500) {
+   return (LOCAL_FONTS[key] ? 400 : weight)+' '+size+'px '+(FONTS[key] || FONTS.sans);
+@@ -596,5 +603,5 @@
+
+  return Promise.all([
+   requestTextFont(key,700,st.showCam==='on'?st.cam:''),
+-  requestTextFont(key,500,st.showCam==='on'?st.lens:''),
++  requestTextFont(key,500,st.showCam==='on'&&!st.isPhone?st.lens:''),
+   requestTextFont(st.noteFont||key,500,st.noteText),
+   requestTextFont(key,500,st.showExp==='on'?[st.fnum,st.shut,st.iso].join(' '):''),
+@@ -620,5 +627,6 @@
+
+     cam: "", lens: "", iso: "", fnum: "", shut: "", dateText: "",
+     noteText: "", showCam: "on", showExp: "off",
+-    font: "sans", noteFont: "sans", noteSize: "14",
++    font: "huninn", noteFont: "huninn", noteSize: "14",
++    cameraBrandChoice:"auto",cameraModelChoice:"auto",cameraBrand:"",cameraModel:"",cameraParts:[],rawExif:{},isPhone:false,
+     color: "#000000",
+     sizeLeft: "14",
+@@ -636,8 +644,9 @@
+
+   if(activeState.cameraBrandChoice==='manual')activeState.manualBrand=$("#camera-brand-text").value;
+   if(activeState.cameraModelChoice==='manual')activeState.manualModel=$("#cam").value;
+-  activeState.cameraBrand=CAMERA_BRANDS[activeState.cameraBrandChoice] || (activeState.cameraBrandChoice==='manual'?$("#camera-brand-text").value.trim():'');
+-  activeState.cameraModel=activeState.cameraModelChoice==='sony-a7cii'?'α7C II':activeState.cameraModelChoice==='manual'?$("#cam").value.trim():'';
++  activeState.cameraBrand=activeState.cameraBrandChoice==='auto'?activeState.autoBrand||'':CAMERA_BRANDS[activeState.cameraBrandChoice] || (activeState.cameraBrandChoice==='manual'?$("#camera-brand-text").value.trim():'');
++  activeState.cameraModel=activeState.cameraModelChoice==='auto'?activeState.autoModel||'':CAMERA_MODELS[activeState.cameraModelChoice]?.text || (activeState.cameraModelChoice==='manual'?$("#cam").value.trim():'');
+   activeState.cam=[activeState.cameraBrand,activeState.cameraModel].filter(Boolean).join(' ');
+-  activeState.lens = $("#lens").value;
++  if(!activeState.isPhone)activeState.lens = $("#lens").value;
++  refreshCameraDisplay(activeState);
+   activeState.dateText = $("#date-text").value;
+   activeState.noteText = $("#note-text").value;
+@@ -655,5 +664,8 @@
+
+ function syncUIFromState() {
+   if (!activeState) return;
+-  const identity=getCameraIdentity(activeState);
++  activeState.font=usableFont(activeState.font);activeState.noteFont=usableFont(activeState.noteFont||activeState.font);
++  const identity=getCameraIdentity(activeState);refreshCameraDisplay(activeState);
++  $('#camera-brand option[value="auto"]').textContent='自動帶入'+(activeState.autoBrand?'（'+activeState.autoBrand+'）':'（無資料）');
++  $('#camera-select option[value="auto"]').textContent='自動帶入'+(activeState.autoModel?'（'+activeState.autoModel+'）':'（無資料）');
+   $("#camera-brand").value=activeState.cameraBrandChoice || (!identity.brand?'none':cameraBrandKey(identity.brand)||'manual');
+   $("#camera-select").value=activeState.cameraModelChoice || (!identity.model?'none':normalizeCameraModel(identity.model)==='α7C II'?'sony-a7cii':'manual');
+@@ -661,5 +673,8 @@
+
+   $("#cam").value=$("#camera-select").value==='manual'?identity.model:(activeState.manualModel||'');
+   toggleCameraManual();
+-  $("#lens").value = activeState.lens || "";
++  $("#lens").value = activeState.isPhone ? "" : activeState.lens || "";
++  $("#lens-field").style.display=activeState.isPhone?"none":"grid";
++  $("#lens").disabled=!!activeState.isPhone;
++  $("#camera-display-label").textContent=activeState.isPhone?"相機品牌／型號 顯示":"相機品牌／型號／鏡頭 顯示";
+   $("#date-text").value = activeState.dateText || "";
+   $("#note-text").value = activeState.noteText || "";
+@@ -752,7 +767,10 @@
+
+ }
+ 
++let backgroundCache=null, colorFrame=0;
++function flushColorPreview(){if(colorFrame){cancelAnimationFrame(colorFrame);colorFrame=0;}if(!exportingBatch)drawAll(false);}
++function queueColorPreview(){activeState.color=$('#color').value;if(!colorFrame&&!exportingBatch)colorFrame=requestAnimationFrame(()=>{colorFrame=0;drawAll(false)});}
+ function drawAll(sync = true) {
+   if (sync) syncStateFromUI();
+-  prepareTextFonts(activeState);
++  if(sync)prepareTextFonts(activeState);
+   const canvas = $("#mainCanvas");
+   const ctx = canvas.getContext("2d");
+@@ -760,6 +778,6 @@
+
+   const {photoDim,sideMargin,topMargin,bottomMargin,safeBottom,totalW,totalH}=getCardGeometry();
+   
+-  canvas.width = totalW;
+-  canvas.height = totalH;
++  if(canvas.width!==totalW)canvas.width=totalW;
++  if(canvas.height!==totalH)canvas.height=totalH;
+ 
+   ctx.clearRect(0, 0, totalW, totalH);
+@@ -773,4 +791,12 @@
+
+   }
+ 
++  const photoX=sideMargin,photoY=topMargin;
++  const backgroundKey=[activeState.frameStyle,activeState.aspect,totalW,totalH,activeState.crop.z,activeState.crop.x,activeState.crop.y].join('|');
++  if(backgroundCache?.source===activeState.source && backgroundCache.key===backgroundKey){ctx.drawImage(backgroundCache.canvas,0,0);}else{
++  if(activeState.frameStyle==='tint'){
++   const sample=document.createElement('canvas');sample.width=photoDim.w;sample.height=photoDim.h;
++   const sg=sample.getContext('2d'),r=coverRect(photoDim.w,photoDim.h);
++   sg.drawImage(activeState.source,r.x,r.y,r.dw,r.dh);sampleTint(sg,0,0,photoDim.w,photoDim.h);
++  }
+   const frameStyle = activeState.frameStyle;
+   if (frameStyle === "black") {
+@@ -817,6 +843,5 @@
+
+   }
+ 
+-  const photoX = sideMargin;
+-  const photoY = topMargin;
++
+   
+   ctx.save();
+@@ -828,13 +853,16 @@
+
+     const r = coverRect(photoDim.w, photoDim.h);
+     ctx.drawImage(activeState.source, photoX + r.x, photoY + r.y, r.dw, r.dh);
+-    sampleTint(ctx, photoX, photoY, photoDim.w, photoDim.h);
++
+   }
+   ctx.restore();
+ 
+-  const fontKey = activeState.font || "sans";
++  const layer=document.createElement('canvas');layer.width=totalW;layer.height=totalH;layer.getContext('2d').drawImage(canvas,0,0);
++  backgroundCache={source:activeState.source,key:backgroundKey,canvas:layer};
++  }
++  const fontKey = activeState.font || "huninn";
+   const font = FONTS[fontKey] || FONTS.sans;
+   const textColor = activeState.color;
+ 
+-  const sizeLeftBase = Number(activeState.sizeLeft) || 14;
++  const sizeLeftBase = fontSizeFor(fontKey,activeState.sizeLeft);
+   const fontSizeLeft = Math.round(sizeLeftBase * (totalW / 360));
+ 
+@@ -847,5 +875,5 @@
+
+   const showCam = activeState.showCam === "on";
+   const camText = showCam ? (activeState.cam.trim() || "") : "";
+-  const lensText = showCam ? activeState.lens.trim() : "";
++  const lensText = showCam && !activeState.isPhone ? activeState.lens.trim() : "";
+   const noteText = activeState.noteText.trim();
+ 
+@@ -917,9 +945,10 @@
+
+   // Without information, use one uncompressed line across the caption.
+   const hasCameraInfo=rows.length>0;
+-  $("#note-layout-help").textContent=hasCameraInfo
++  const noteHint=hasCameraInfo
+     ? '目前備註限制在左上區域，不會縮小相機資訊。'
+     : '目前備註以單行向右顯示，不自動換行。';
++  if($('#note-layout-help').textContent!==noteHint)$('#note-layout-help').textContent=noteHint;
+   if(noteText){
+-    const noteSize=(Number(activeState.noteSize)||14)*(totalW/360)*.85;
++    const noteSize=fontSizeFor(activeState.noteFont,activeState.noteSize)*(totalW/360)*.85;
+     const noteY=photoY+photoDim.h+bottomMargin*.04;
+     const boxBottom=photoY+photoDim.h+bottomMargin*.32;
+@@ -1082,13 +1111,14 @@
+
+   let meta = {};
+   try { meta = await readExif(buf); } catch(e) {}
+-  itemState.cam = cleanCam(meta.make, meta.model);
+-  if(meta.make || meta.model) {
+-    itemState.cameraBrand=(meta.make||'').trim();
+-    let model=(meta.model||'').trim();
+-    if(itemState.cameraBrand && model.toLowerCase().startsWith(itemState.cameraBrand.toLowerCase()+' '))model=model.slice(itemState.cameraBrand.length).trim();
+-    itemState.cameraModel=normalizeCameraModel(model);
+-    itemState.cam=[itemState.cameraBrand,itemState.cameraModel].filter(Boolean).join(' ');
+-  }
+-  itemState.lens = (meta.lens || "").trim();
++  itemState.originalFile=file;
++  itemState.rawExif=Object.freeze({...meta});
++  itemState.isPhone=isPhoneExif(meta);
++  itemState.autoBrand=normalizeBrand(meta.make);
++  let model=String(meta.model||'').trim();
++  if(itemState.autoBrand && model.toLowerCase().startsWith(itemState.autoBrand.toLowerCase()+' '))model=model.slice(itemState.autoBrand.length).trim();
++  itemState.autoModel=normalizeCameraModel(model,itemState.autoBrand);
++  itemState.cameraBrand=itemState.autoBrand;itemState.cameraModel=itemState.autoModel;
++  itemState.lens=String(meta.lens||'').trim();
++  refreshCameraDisplay(itemState);
+   itemState.iso = meta.iso ? String(meta.iso) : "";
+   itemState.fnum = fmtF(Number(meta.fnum));
+@@ -1240,5 +1270,5 @@
+
+   syncStateFromUI();
+   if(!await prepareTextFonts(activeState)){alert('字體尚未成功載入，請確認字體檔案後重試。');return;}
+-  await logoReady; await document.fonts.ready;
++  await Promise.all([logoReady,modelLogoReady]); await document.fonts.ready;
+   if (!activeState || !activeState.source) { alert("先上傳照片"); return; }
+   drawAll();
+@@ -1257,5 +1287,5 @@
+
+   syncStateFromUI();
+   if(!await prepareTextFonts(activeState)){alert('字體尚未成功載入，請確認字體檔案後重試。');return;}
+-  await logoReady; await document.fonts.ready;
++  await Promise.all([logoReady,modelLogoReady]); await document.fonts.ready;
+   if (!activeState || !activeState.source) { alert("先上傳照片"); return; }
+   drawAll();
+@@ -1298,5 +1328,5 @@
+
+   const ready=await Promise.all(itemsList.map(prepareTextFonts));
+   if(ready.includes(false)){alert('部分字體未成功載入，請確認字體檔案後重試。');return;}
+-  await logoReady; await document.fonts.ready;
++  await Promise.all([logoReady,modelLogoReady]); await document.fonts.ready;
+   if (!itemsList.length || !window.JSZip) {
+     alert("請先讀取照片或確認網路連接");
+@@ -1365,6 +1395,8 @@
+
+ }));
+ 
++$('#color').addEventListener('input',queueColorPreview);
++$('#color').addEventListener('change',()=>{activeState.color=$('#color').value;flushColorPreview();});
+ // 事件繫結
+-["camera-brand-text","cam","lens","font","note-font","note-size","size-left","color","date-on","date-size","date-text","note-text"].forEach(id => {
++["camera-brand-text","cam","lens","font","note-font","note-size","size-left","date-on","date-size","date-text","note-text"].forEach(id => {
+   $("#" + id).addEventListener("input", drawAll);
+ });
+@@ -1496,5 +1528,5 @@
+
+       const d = dist(e);
+       activeState.crop.z = Math.max(1, Math.min(4, startZ * (d / Math.max(1, startDist))));
+-      drawAll();
++      drawAll(false);
+       return;
+     }
+@@ -1522,5 +1554,5 @@
+
+     }
+ 
+-    drawAll();
++    drawAll(false);
+   };
+ 
+@@ -1543,5 +1575,5 @@
+
+     e.preventDefault();
+     activeState.crop.z = Math.max(1, Math.min(4, activeState.crop.z + (e.deltaY < 0 ? 0.08 : -0.08)));
+-    drawAll();
++    drawAll(false);
+   }, { passive: false });
+ })();
+@@ -1600,5 +1632,5 @@
+
+ })();
+ 
+-drawAll();
++syncUIFromState();drawAll();
+ </script>
+ </body>

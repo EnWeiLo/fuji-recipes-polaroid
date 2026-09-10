@@ -246,12 +246,7 @@
             <h1>富士食譜工具</h1>
           </div>
         </div>
-        <a class="icon-btn" href="polaroid.html" title="拍立得" aria-label="拍立得">
-          <svg width="18" height="22" viewBox="0 0 18 22" fill="none" aria-hidden="true">
-            <rect x="1" y="1" width="16" height="20" rx="1.6" fill="#f4eee4"/>
-            <rect x="2.6" y="2.6" width="12.8" height="12.2" fill="#2b2622"/>
-          </svg>
-        </a>
+        <a class="icon-btn" style="width:auto;padding:0 12px;white-space:nowrap;font-size:13px" href="polaroid.html" title="拍立得工作室" aria-label="拍立得工作室">拍立得工作室</a>
         <button class="icon-btn" id="btn-auth" title="登入共用" aria-label="登入共用">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
             <circle cx="9" cy="6" r="3.1" fill="#f4eee4"/>
@@ -1341,7 +1336,7 @@ renderList();
 sb.auth.getSession().then(({data})=>{
   if(data && data.session) afterLogin(data.session);
 });
-if ("serviceWorker" in navigator) {
+if (location.protocol !== "file:" && "serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js").catch(() => {});
 }
 </script>

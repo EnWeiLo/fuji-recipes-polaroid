@@ -1,8 +1,8 @@
 {
-  "name": "富士食譜工具",
-  "short_name": "富士食譜",
-  "description": "富士相機食譜本",
-  "start_url": "./",
+  "name": "富士食譜工具與拍立得工作室",
+  "short_name": "富士食譜工具",
+  "description": "照片邊框與 Instagram 4:5 匯出工具",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
