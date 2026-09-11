@@ -255,6 +255,10 @@
 .stage-toggle { display:none; }
 @media(max-width:859px) { .stage-toggle { display:grid; } }
 .text-group{display:grid;gap:12px;border-top:1px solid var(--line);padding-top:14px;margin-top:4px}#text-settings>.section-heading{margin-bottom:0}.text-group .hint{margin:0}.text-group h4{margin:0;color:var(--cream);font-size:13px}.text-group .row2{margin:0;align-items:start}.camera-fields{display:grid;gap:10px;align-content:start}#exif-row-1{grid-template-columns:minmax(0,1fr);align-items:start}#text-settings .field{min-width:0}#text-settings .field input,#text-settings .field select{min-width:0;width:100%}@media(max-width:600px){#text-settings .row2{grid-template-columns:minmax(0,1fr)}.top{flex-wrap:wrap}.top .brand{min-width:140px}}
+#lens-controls{display:grid;gap:10px}#lens-field{display:grid;min-height:68px}#camera-brand-manual,#camera-manual-field{min-height:68px}
+#camera-brand-manual,#camera-manual-field,#lens-field{min-height:44px;font-size:0;gap:0}#camera-brand-text,#cam,#lens{font-size:14px}
+#exif-row-1{gap:10px}#lens-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;gap:8px}#lens-controls>label:first-child{grid-column:1 / -1;grid-row:1}#lens-controls[data-manual="true"]>label:first-child{grid-column:1}#lens-field{grid-column:2;grid-row:1}
+#text-settings .camera-source-stack{grid-template-columns:minmax(0,1fr);gap:10px}.camera-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;gap:8px}#camera-brand-manual,#camera-manual-field{grid-column:2;grid-row:1}#lens-controls>label:first-child{grid-column:1}.stage{margin-bottom:28px}.stage>.editor-tip{position:absolute;top:100%;left:0;right:0;margin:6px 0 0;padding:0;font-size:13px;line-height:1.5;text-align:center;pointer-events:none}
 </style>
 </head>
 <body>
@@ -283,6 +287,7 @@
       </section>
       <div class="stage" id="stage">
         <div class="polaroid-container"><canvas id="mainCanvas"></canvas></div>
+        <p class="hint editor-tip">拖曳照片調整裁切，雙指或滾輪縮放。</p>
         <button type="button" class="stage-toggle" id="stageToggle" title="收合／展開預覽">﹀</button>
       </div>
       <div class="form">
@@ -294,7 +299,7 @@
         <button class="pbtn ghost" id="apply-sync-btn" style="border-color: var(--fuji); color: var(--fuji);">套用設定</button>
       </div>
 
-<section class="control-panel" id="text-settings"><div class="section-heading"><h3>文字資訊</h3><p>相機資料會自動帶入</p></div><section class="text-group" ><h4>顯示內容</h4><div class="row2"><label class="field"><span id="camera-display-label">相機品牌／型號／鏡頭 顯示</span>
+<section class="control-panel" id="text-settings"><div class="section-heading"><h3>文字資訊</h3><p>相機資料會自動帶入</p></div><section class="text-group"><h4>顯示內容</h4><div class="row2"><label class="field"><span id="camera-display-label">相機品牌／型號 顯示</span>
           <select id="show-cam">
             <option value="on" selected>開</option>
             <option value="off">關</option>
@@ -302,25 +307,9 @@
         </label><label class="field" id="exposure-display-field" style="display:none">快門／光圈／ISO 顯示
           <select id="show-exp" disabled><option value="on">顯示</option><option value="off" selected>不顯示</option>
           </select>
-        </label></div><label class="field">自訂備註 / 標題
+        </label></div></section><section class="text-group" id="exif-row-1"><h4>相機資料</h4><div class="row2 camera-source-stack"><div class="camera-fields"><label class="field">相機品牌來源<select id="camera-brand"><option value="auto">自動帶入</option><option value="manual">手動輸入</option><option value="none">不顯示</option></select></label><label class="field" id="camera-brand-manual" style="display:none">手動輸入品牌<input id="camera-brand-text" placeholder="例如 FUJIFILM"></label></div><div class="camera-fields"><label class="field">相機型號來源<select id="camera-select"><option value="auto">自動帶入</option><option value="manual">手動輸入</option><option value="none">不顯示</option></select></label><label class="field" id="camera-manual-field" style="display:none">手動輸入型號<input id="cam" placeholder="例如 X-T50"></label></div></div><div id="lens-slot"><div id="lens-controls"><label class="field">鏡頭來源<select id="lens-source"><option value="auto">自動帶入</option><option value="manual">手動輸入</option><option value="none">不顯示</option></select></label><label class="field" id="lens-field">手動輸入鏡頭<input id="lens" placeholder="XF35mmF1.4 R"></label></div></div><label class="field">自訂備註 / 標題
         <input id="note-text" placeholder="輸入隨想或地點...">
-      </label><p class="hint" id="note-layout-help" aria-live="polite"></p></section><section class="text-group" id="exif-row-1"><h4>相機資料</h4><div class="row2"><div class="camera-fields"><label class="field">相機品牌來源<select id="camera-brand"><option value="auto">自動帶入</option><option value="none">不顯示</option><option value="sony">SONY</option><option value="canon">Canon</option><option value="nikon">NIKON</option><option value="fujifilm">FUJIFILM</option><option value="manual">手動輸入</option></select></label><label class="field" id="camera-brand-manual" style="display:none">手動輸入品牌<input id="camera-brand-text" placeholder="例如 FUJIFILM"></label></div><div class="camera-fields"><label class="field">相機型號來源<select id="camera-select"><option value="auto">自動帶入</option><option value="none">不顯示</option><option value="sony-a7cii">α7C II</option><option value="nikon-z5ii">Z5 II</option><option value="nikon-z6">Z6</option><option value="fuji-xt50">X-T50</option><option value="manual">手動輸入</option></select></label><label class="field" id="camera-manual-field" style="display:none">手動輸入型號<input id="cam" placeholder="例如 X-T50"></label></div></div><label class="field" id="lens-field">鏡頭<input id="lens" placeholder="XF35mmF1.4 R"></label></section><section class="text-group" ><h4>字體與外觀</h4><div class="row2"><label class="field">自訂備註字型<select id="note-font">
-            
-            <option value="serif">經典明體 (Noto Serif)</option>
-            <option value="mono">等寬數字 (Mono)</option>
-            <option value="hand">手寫英文 (Caveat)</option>
-            <option value="round">圓體 (Zen Maru)</option>
-            <option value="kiwi">溫潤明體 (Kiwi Maru)</option>
-            <option value="yuji">懷舊墨楷 (Yuji Syuku)</option>
-          <option value="chen">辰宇落雁 2.0（細體）</option>
-<option value="huninn">jf open 粉圓 2.1</option>
-
-
-
-<option value="genryu-m">源流明體 TW（中等）</option>
-<option value="genryu-sb">源流明體 TW（半粗）</option>
-<option value="genryu-b">源流明體 TW（粗體）</option>
-<option value="genryu-h">源流明體 TW（特粗）</option></select></label><label class="field">自訂備註字體大小<select id="note-size"><option value="12">小</option><option value="14" selected>中</option><option value="18">大</option><option value="22">特大</option></select></label></div><div class="row2"><label class="field">相機／鏡頭字型
+      </label><p class="hint" id="note-layout-help" aria-live="polite"></p></section><section class="text-group"><h4>字體與外觀</h4><div class="row2"><label class="field">相機／鏡頭字型
           <select id="font">
             
             <option value="serif">經典明體 (Noto Serif)</option>
@@ -338,15 +327,31 @@
 <option value="genryu-sb">源流明體 TW（半粗）</option>
 <option value="genryu-b">源流明體 TW（粗體）</option>
 <option value="genryu-h">源流明體 TW（特粗）</option></select>
-        </label><label class="field">顏色<input id="color" type="color" value="#000000"></label></div><label class="field">相機／鏡頭／曝光資訊字體大小
+        </label><label class="field">相機／鏡頭／曝光資訊字體大小
         <select id="size-left">
             <option value="12">小</option>
             <option value="14" selected>中</option>
             <option value="18">大</option>
             <option value="22">特大</option>
           </select>
-      </label><p class="hint" id="font-status" role="status" aria-live="polite" style="display:none"></p></section></section>
-      <details class="control-panel">
+      </label></div><div class="row2"><label class="field">自訂備註字型<select id="note-font">
+            
+            <option value="serif">經典明體 (Noto Serif)</option>
+            <option value="mono">等寬數字 (Mono)</option>
+            <option value="hand">手寫英文 (Caveat)</option>
+            <option value="round">圓體 (Zen Maru)</option>
+            <option value="kiwi">溫潤明體 (Kiwi Maru)</option>
+            <option value="yuji">懷舊墨楷 (Yuji Syuku)</option>
+          <option value="chen">辰宇落雁 2.0（細體）</option>
+<option value="huninn">jf open 粉圓 2.1</option>
+
+
+
+<option value="genryu-m">源流明體 TW（中等）</option>
+<option value="genryu-sb">源流明體 TW（半粗）</option>
+<option value="genryu-b">源流明體 TW（粗體）</option>
+<option value="genryu-h">源流明體 TW（特粗）</option></select></label><label class="field">自訂備註字體大小<select id="note-size"><option value="12">小</option><option value="14" selected>中</option><option value="18">大</option><option value="22">特大</option></select></label></div><label class="field">字體顏色<input id="color" type="color" value="#000000"></label><p class="hint" id="font-status" role="status" aria-live="polite" style="display:none"></p></section></section>
+<details class="control-panel">
         <summary>日期戳與位置</summary>
       <div class="row2">
         <label class="field">日期戳
@@ -386,7 +391,7 @@
         <button class="pbtn ghost full" id="save-all" style="display:none;">打包下載全部 (ZIP)</button>
       </div>
       </div>
-      <p class="hint editor-tip">拖曳照片調整裁切，雙指或滾輪縮放。備註顯示於左側，相機、鏡頭與曝光資訊依序置中。Instagram 貼文為 4:5；限時動態為 1080 × 1920（9:16），照片保留上下安全空間，資訊在照片下方留白置中。兩種比例皆可搭配各種邊框。</p>
+      
     </main>
   </div>
 
@@ -458,8 +463,11 @@ function isPhoneExif(meta){return PHONE_RULES.some(([make,model])=>make.test(Str
 function refreshCameraDisplay(st){
  st.cameraBrand=normalizeBrand(st.cameraBrand);st.cameraModel=normalizeCameraModel(st.cameraModel,st.cameraBrand);
  st.cam=[st.cameraBrand,st.cameraModel].filter(Boolean).join(' ');
- const preset=Object.values(CAMERA_MODELS).find(x=>x.text===st.cameraModel);
- st.cameraParts=[{text:st.cameraBrand,mark:cameraBrandKey(st.cameraBrand)||null},{text:st.cameraModel,mark:preset?.mark||null}].filter(x=>x.text);
+ const brandKey=cameraBrandKey(st.autoBrand||''),model=st.autoModel;
+ const confirmed={sony:{'α7C II':'alpha'},nikon:{'Z5 II':'z5ii','Z6':'z6'},fujifilm:{'X-T50':'xt50'}};
+ const mark=confirmed[brandKey]?.[model];
+ const useLogo=!!(st.rawExif?.make&&st.rawExif?.model&&mark&&st.cameraBrandChoice!=='manual'&&st.cameraModelChoice!=='manual');
+ st.cameraParts=[{text:st.cameraBrand,mark:useLogo&&st.cameraBrandChoice==='auto'?brandKey:null},{text:st.cameraModel,mark:useLogo&&st.cameraModelChoice==='auto'?mark:null}].filter(x=>x.text);
 }
 function getCameraParts(st){return st.cameraParts||[];}
 function drawCameraMark(ctx,mask,left,y,height,color) {
@@ -606,7 +614,7 @@ function prepareTextFonts(st) {
  const key=st.font||'sans';
  return Promise.all([
   requestTextFont(key,700,st.showCam==='on'?st.cam:''),
-  requestTextFont(key,500,st.showCam==='on'&&!st.isPhone?st.lens:''),
+  requestTextFont(key,500,!st.isPhone?st.lens:''),
   requestTextFont(st.noteFont||key,500,st.noteText),
   requestTextFont(key,500,st.showExp==='on'?[st.fnum,st.shut,st.iso].join(' '):''),
   requestTextFont(key,700,st.dateOn==='on'?st.dateText:'')
@@ -650,7 +658,9 @@ function syncStateFromUI() {
   activeState.cameraBrand=activeState.cameraBrandChoice==='auto'?activeState.autoBrand||'':CAMERA_BRANDS[activeState.cameraBrandChoice] || (activeState.cameraBrandChoice==='manual'?$("#camera-brand-text").value.trim():'');
   activeState.cameraModel=activeState.cameraModelChoice==='auto'?activeState.autoModel||'':CAMERA_MODELS[activeState.cameraModelChoice]?.text || (activeState.cameraModelChoice==='manual'?$("#cam").value.trim():'');
   activeState.cam=[activeState.cameraBrand,activeState.cameraModel].filter(Boolean).join(' ');
-  if(!activeState.isPhone)activeState.lens = $("#lens").value;
+  activeState.lensChoice=$('#lens-source').value;
+  if(activeState.lensChoice==='manual'&&!activeState.isPhone)activeState.manualLens=$('#lens').value;
+  activeState.lens=activeState.lensChoice==='auto'?activeState.autoLens||'':activeState.lensChoice==='manual'?activeState.manualLens||'':'';
   refreshCameraDisplay(activeState);
   activeState.dateText = $("#date-text").value;
   activeState.noteText = $("#note-text").value;
@@ -668,6 +678,7 @@ function syncStateFromUI() {
 function syncUIFromState() {
   if (!activeState) return;
   activeState.font=usableFont(activeState.font);activeState.noteFont=usableFont(activeState.noteFont||activeState.font);
+  migrateSources(activeState);
   const identity=getCameraIdentity(activeState);refreshCameraDisplay(activeState);
   $('#camera-brand option[value="auto"]').textContent='自動帶入'+(activeState.autoBrand?'（'+activeState.autoBrand+'）':'（無資料）');
   $('#camera-select option[value="auto"]').textContent='自動帶入'+(activeState.autoModel?'（'+activeState.autoModel+'）':'（無資料）');
@@ -676,10 +687,13 @@ function syncUIFromState() {
   $("#camera-brand-text").value=$("#camera-brand").value==='manual'?identity.brand:(activeState.manualBrand||'');
   $("#cam").value=$("#camera-select").value==='manual'?identity.model:(activeState.manualModel||'');
   toggleCameraManual();
-  $("#lens").value = activeState.isPhone ? "" : activeState.lens || "";
-  $("#lens-field").style.display=activeState.isPhone?"none":"grid";
-  $("#lens").disabled=!!activeState.isPhone;
-  $("#camera-display-label").textContent=activeState.isPhone?"相機品牌／型號 顯示":"相機品牌／型號／鏡頭 顯示";
+  $('#lens-source').value=activeState.lensChoice;
+  $('#lens').value=activeState.manualLens||'';
+  $('#lens-controls').style.visibility=activeState.isPhone?'hidden':'visible';
+  $('#lens-controls').inert=!!activeState.isPhone;
+  $('#lens-source').disabled=$('#lens').disabled=!!activeState.isPhone;
+  $('#camera-display-label').textContent='相機品牌／型號 顯示';
+  toggleLensManual();
   $("#date-text").value = activeState.dateText || "";
   $("#note-text").value = activeState.noteText || "";
   $("#show-cam").value = activeState.showCam || "on";
@@ -700,17 +714,26 @@ function syncUIFromState() {
   updateSyncSelectOptions();
 }
 
+function migrateSources(st){
+ for(const [choice,text,manual] of [['cameraBrandChoice','cameraBrand','manualBrand'],['cameraModelChoice','cameraModel','manualModel']]){
+  if(!['auto','manual','none'].includes(st[choice])){st[choice]=st[text]?'manual':'auto';st[manual]=st[text]||'';}
+ }
+ if(st.autoLens===undefined)st.autoLens=st.rawExif?.lens||'';
+ if(!st.lensChoice){st.lensChoice=st.lens&&st.lens!==st.autoLens?'manual':'auto';st.manualLens=st.lens||'';}
+}
+function toggleLensManual(){const visible=$('#lens-source').value==='manual';$('#lens-controls').dataset.manual=String(visible);$('#lens-field').style.visibility=visible?'inherit':'hidden';$('#lens-field').inert=!visible;}
 function hasExposureData(st) {
   return !!st && [st.iso,st.fnum,st.shut].some(value=>String(value||'').trim());
 }
 function toggleExifInputs() {
   const showCam = $("#show-cam").value === "on";
   const available = hasExposureData(activeState);
-  $("#exposure-display-field").style.display = available ? "grid" : "none";
+  $("#exposure-display-field").style.display="grid";
+  $("#exposure-display-field").style.visibility=available?"visible":"hidden";
   $("#show-exp").disabled = !available;
   if(!available){activeState.showExp="off";$("#show-exp").value="off";}
   
-  $("#exif-row-1").style.display = showCam ? "grid" : "none";
+  $("#exif-row-1").style.display = "grid";
 }
 
 function updateSyncSelectOptions() {
@@ -878,7 +901,7 @@ function drawAll(sync = true) {
   const leftX = photoX + (activeState.pos.left / 100) * photoDim.w;
   const showCam = activeState.showCam === "on";
   const camText = showCam ? (activeState.cam.trim() || "") : "";
-  const lensText = showCam && !activeState.isPhone ? activeState.lens.trim() : "";
+  const lensText = !activeState.isPhone ? activeState.lens.trim() : "";
   const noteText = activeState.noteText.trim();
 
 
@@ -949,9 +972,10 @@ function drawAll(sync = true) {
   // Without information, use one uncompressed line across the caption.
   const hasCameraInfo=rows.length>0;
   const noteHint=hasCameraInfo
-    ? '目前備註限制在左上區域，不會縮小相機資訊。'
+    ? ''
     : '目前備註以單行向右顯示，不自動換行。';
   if($('#note-layout-help').textContent!==noteHint)$('#note-layout-help').textContent=noteHint;
+  $('#note-layout-help').hidden=!noteHint;
   if(noteText){
     const noteSize=fontSizeFor(activeState.noteFont,activeState.noteSize)*(totalW/360)*.85;
     const noteY=photoY+photoDim.h+bottomMargin*.04;
@@ -1122,7 +1146,7 @@ async function processSingleFile(file) {
   if(itemState.autoBrand && model.toLowerCase().startsWith(itemState.autoBrand.toLowerCase()+' '))model=model.slice(itemState.autoBrand.length).trim();
   itemState.autoModel=normalizeCameraModel(model,itemState.autoBrand);
   itemState.cameraBrand=itemState.autoBrand;itemState.cameraModel=itemState.autoModel;
-  itemState.lens=String(meta.lens||'').trim();
+  itemState.autoLens=String(meta.lens||'').trim();itemState.lensChoice='auto';itemState.manualLens='';itemState.lens=itemState.autoLens;
   refreshCameraDisplay(itemState);
   itemState.iso = meta.iso ? String(meta.iso) : "";
   itemState.fnum = fmtF(Number(meta.fnum));
@@ -1390,14 +1414,15 @@ function applySyncFromSelectedPhoto() {
 }
 
 function toggleCameraManual() {
-  $("#camera-brand-manual").style.display = $("#camera-brand").value === "manual" ? "grid" : "none";
-  $("#camera-manual-field").style.display = $("#camera-select").value === "manual" ? "grid" : "none";
+  $('#camera-brand-manual').style.display='grid';$('#camera-brand-manual').style.visibility=$('#camera-brand').value==='manual'?'visible':'hidden';$('#camera-brand-manual').inert=$('#camera-brand').value!=='manual';
+  $('#camera-manual-field').style.display='grid';$('#camera-manual-field').style.visibility=$('#camera-select').value==='manual'?'visible':'hidden';$('#camera-manual-field').inert=$('#camera-select').value!=='manual';
 }
 ["#camera-brand","#camera-select"].forEach(selector=>$(selector).addEventListener("change", () => {
   toggleCameraManual();
   drawAll();
 }));
 
+$('#lens-source').addEventListener('change',()=>{toggleLensManual();drawAll();});
 $('#color').addEventListener('input',queueColorPreview);
 $('#color').addEventListener('change',()=>{activeState.color=$('#color').value;flushColorPreview();});
 // 事件繫結
@@ -1455,7 +1480,31 @@ $("#save").onclick = exportCard;
 $("#share").onclick = shareCard;
 $("#save-all").onclick = exportAllCards;
 
+let pendingPhotoTarget;
+function openPhotoPicker(){
+ if(addingFiles||exportingBatch)return;
+ pendingPhotoTarget=activeState?.source?activeState:null;
+ const input=$('#file');input.multiple=false;input.value='';input.click();
+}
+async function replacePickedPhoto(target,file){
+ if(addingFiles)return;addingFiles=true;syncStateFromUI();
+ try{
+  const next=await processSingleFile(file);
+  const index=itemsList.indexOf(target);
+  if(target&&index<0){URL.revokeObjectURL(next.thumbUrl);next.source?.close?.();return;}
+  if(target){
+   for(const key of ['frameStyle','aspect','font','noteFont','noteSize','noteText','color','sizeLeft','showCam','showExp','dateOn','dateSize','dateSide','datePos'])next[key]=target[key];
+   if(!hasExposureData(next))next.showExp='off';
+   itemsList[index]=next;currentIndex=index;URL.revokeObjectURL(target.thumbUrl);target.source?.close?.();
+  }else{itemsList.push(next);currentIndex=itemsList.length-1;}
+  activeState=next;renderThumbnails();syncUIFromState();drawAll();
+ }finally{addingFiles=false;}
+}
+$('#file').addEventListener('cancel',()=>{pendingPhotoTarget=undefined;$('#file').multiple=true;});
+$('#mainPickLabel').addEventListener('pointerdown',()=>{pendingPhotoTarget=undefined;$('#file').multiple=true;});
+
 $("#file").addEventListener("change", e => {
+  if(pendingPhotoTarget!==undefined){const target=pendingPhotoTarget;pendingPhotoTarget=undefined;e.target.multiple=true;const file=e.target.files?.[0];if(file)replacePickedPhoto(target,file).catch(err=>alert(err.message||"讀取照片失敗"));return;}
   const files = e.target.files;
   if (files && files.length > 0) {
     itemsList.forEach(item=>{URL.revokeObjectURL(item.thumbUrl);item.source?.close?.();});
@@ -1472,6 +1521,8 @@ $("#file").addEventListener("change", e => {
   let ox = 0, oy = 0;
   let startPosVal = 0;
   let pinching = false, startZ = 1, startDist = 0;
+  let tap=null,ignoreMouseUntil=0,wheelUntil=0;
+  const inPhoto=({x,y})=>{const g=getCardGeometry();return x>=g.sideMargin&&x<=g.sideMargin+g.photoDim.w&&y>=g.topMargin&&y<=g.topMargin+g.photoDim.h;};
 
   const pt = e => e.touches ? e.touches[0] : e;
   const dist = e => {
@@ -1490,6 +1541,12 @@ $("#file").addEventListener("change", e => {
   };
 
   const down = e => {
+    if(!e.touches&&(e.button!==0||Date.now()<ignoreMouseUntil))return;
+    if(e.touches)ignoreMouseUntil=Date.now()+800;
+    const point=pt(e);
+    if(e.touches?.length>=2){if(tap)tap.moved=true;}
+    else tap={x:point.clientX,y:point.clientY,moved:false,eligible:inPhoto(getCanvasCoords(e))&&Date.now()>wheelUntil};
+    sx=point.clientX;sy=point.clientY;
     if (!activeState || !activeState.source) return;
     
     if (e.touches && e.touches.length >= 2) {
@@ -1525,7 +1582,10 @@ $("#file").addEventListener("change", e => {
   };
 
   const move = e => {
+    if(!e.touches&&Date.now()<ignoreMouseUntil)return;
+    if(tap&&Math.hypot(pt(e).clientX-tap.x,pt(e).clientY-tap.y)>6)tap.moved=true;
     if (!mode || !activeState) return;
+    if(pinching&&(!e.touches||e.touches.length<2))return;
     
     if (pinching && e.touches && e.touches.length >= 2) {
       e.preventDefault();
@@ -1560,21 +1620,27 @@ $("#file").addEventListener("change", e => {
     drawAll(false);
   };
 
-  const up = () => {
-    mode = null;
-    pinching = false;
-    canvas.style.cursor = "grab";
+  const up = e => {
+    if(!e.changedTouches&&Date.now()<ignoreMouseUntil)return;
+    if(e.touches?.length)return;
+    const point=e.changedTouches?.[0]||e;
+    const rect=canvas.getBoundingClientRect(),scale=canvas.width/rect.width;
+    const click=tap&&tap.eligible&&!tap.moved&&!pinching&&Date.now()>wheelUntil&&Math.hypot(point.clientX-tap.x,point.clientY-tap.y)<=6&&inPhoto({x:(point.clientX-rect.left)*scale,y:(point.clientY-rect.top)*scale});
+    mode=null;pinching=false;tap=null;canvas.style.cursor='grab';
+    if(e.changedTouches){ignoreMouseUntil=Date.now()+800;if(e.cancelable)e.preventDefault();}
+    if(click)openPhotoPicker();
   };
-
+  window.addEventListener('touchcancel',()=>{tap=null;mode=null;pinching=false;ignoreMouseUntil=Date.now()+800;});
   canvas.addEventListener("mousedown", down);
   window.addEventListener("mousemove", move);
   window.addEventListener("mouseup", up);
 
   canvas.addEventListener("touchstart", down, { passive: false });
   window.addEventListener("touchmove", move, { passive: false });
-  window.addEventListener("touchend", up);
+  window.addEventListener("touchend", up, {passive:false});
 
   canvas.addEventListener("wheel", e => {
+    wheelUntil=Date.now()+350;if(tap)tap.moved=true;
     if (!activeState || !activeState.source) return;
     e.preventDefault();
     activeState.crop.z = Math.max(1, Math.min(4, activeState.crop.z + (e.deltaY < 0 ? 0.08 : -0.08)));
