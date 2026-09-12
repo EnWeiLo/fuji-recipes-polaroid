@@ -127,7 +127,7 @@
     .preset-grid { display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-top:16px; padding-top:14px; border-top:1px solid var(--line); }
     .preset-label { display:block; margin:0 0 8px; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.03em; }
     .frames, .ratios { display:grid; gap:6px; margin:0; }
-    .frames { grid-template-columns:repeat(5,1fr); }
+    
     .ratios { grid-template-columns:repeat(4,minmax(0,1fr)); min-width:0; }
     .frames button, .ratios button, .sides button {
       border:0; min-height:40px; border-radius:var(--r-sm); font-weight:700; font-size:12.5px; padding:2px 4px;
@@ -215,7 +215,6 @@
         top:calc(var(--header-h) + var(--safe-t) - 2px);
         margin:0 -16px; border-radius:0 0 22px 22px; padding:12px 16px 14px;
         display:flex; justify-content:center; align-items:center;
-        transition:padding .2s ease;
       }
       /* 直式照片時改依「高度」縮放（由 JS 計算實際 px），避免預覽把畫面佔滿 */
       .polaroid-container { width:auto; max-width:min(78vw, 320px); }
@@ -249,16 +248,29 @@
 *, *::before, *::after { border-radius:0 !important; }
 .frames { grid-template-columns:repeat(3,minmax(0,1fr)); }
 .frames button { display:flex; align-items:center; justify-content:center; gap:5px; }
-.ratios button[data-aspect^="instagram"] { grid-column:span 2; min-width:0; display:flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap; font-size:clamp(10px,2.7vw,12.5px); }
+.ratios button[data-aspect^="instagram"] { min-width:0; display:flex; align-items:center; justify-content:center; gap:5px;  }
 .ratios button.on { box-shadow:inset 0 0 0 2px var(--fuji); }
 .ig-icon { width:16px; height:16px; flex:none; }
 .stage-toggle { display:none; }
 @media(max-width:859px) { .stage-toggle { display:grid; } }
 .text-group{display:grid;gap:12px;border-top:1px solid var(--line);padding-top:14px;margin-top:4px}#text-settings>.section-heading{margin-bottom:0}.text-group .hint{margin:0}.text-group h4{margin:0;color:var(--cream);font-size:13px}.text-group .row2{margin:0;align-items:start}.camera-fields{display:grid;gap:10px;align-content:start}#exif-row-1{grid-template-columns:minmax(0,1fr);align-items:start}#text-settings .field{min-width:0}#text-settings .field input,#text-settings .field select{min-width:0;width:100%}@media(max-width:600px){#text-settings .row2{grid-template-columns:minmax(0,1fr)}.top{flex-wrap:wrap}.top .brand{min-width:140px}}
-#lens-controls{display:grid;gap:10px}#lens-field{display:grid;min-height:68px}#camera-brand-manual,#camera-manual-field{min-height:68px}
+#lens-controls{display:grid;gap:10px}#lens-field{display:grid}
 #camera-brand-manual,#camera-manual-field,#lens-field{min-height:44px;font-size:0;gap:0}#camera-brand-text,#cam,#lens{font-size:14px}
-#exif-row-1{gap:10px}#lens-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;gap:8px}#lens-controls>label:first-child{grid-column:1 / -1;grid-row:1}#lens-controls[data-manual="true"]>label:first-child{grid-column:1}#lens-field{grid-column:2;grid-row:1}
+#exif-row-1{gap:10px}#lens-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;gap:8px}#lens-controls>label:first-child{grid-row:1}#lens-field{grid-column:2;grid-row:1}
 #text-settings .camera-source-stack{grid-template-columns:minmax(0,1fr);gap:10px}.camera-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;gap:8px}#camera-brand-manual,#camera-manual-field{grid-column:2;grid-row:1}#lens-controls>label:first-child{grid-column:1}.stage{margin-bottom:28px}.stage>.editor-tip{position:absolute;top:100%;left:0;right:0;margin:6px 0 0;padding:0;font-size:13px;line-height:1.5;text-align:center;pointer-events:none}
+.display-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}#shot-on-control{font-size:13px;align-items:center;gap:6px}#shot-on-control:not([hidden]){display:flex}#shot-on{accent-color:var(--fuji);width:18px;height:18px}
+/* Expanded preview and exactly two ratio rows. */
+body.banner-preview .wrap{max-width:1680px}.editor-shell>*,.form,.preset-grid>div{min-width:0}body.banner-preview .polaroid-container{width:100%;max-width:100%}
+#ratios{grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:52px 52px}
+#ratios button{grid-column:span 3;min-width:0;height:52px;min-height:52px;padding:4px;line-height:1.15}
+#ratios [data-aspect="banner"]{grid-column:1 / span 2;grid-row:2}
+#ratios [data-aspect="instagram"]{grid-column:3 / span 5;grid-row:2}
+#ratios [data-aspect="instagram-story"]{grid-column:8 / span 5;grid-row:2}
+#ratios button[data-aspect^="instagram"]{white-space:normal;font-size:12px;gap:5px}
+@media(min-width:860px){body.banner-preview .top{padding-inline:max(16px,calc((100vw - 1680px)/2))}body.banner-preview .editor-shell{grid-template-columns:minmax(0,1fr) clamp(360px,30vw,440px);gap:24px}body.banner-preview .stage{padding:10px}.preset-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+@media(max-width:859px){body.banner-preview .stage{transition:none;position:relative;top:auto;margin-inline:0;padding:8px;order:-1}body.banner-preview .polaroid-container{max-width:100%;width:auto}.stage.collapsed .polaroid-container{max-width:120px}.preset-grid{grid-template-columns:minmax(0,1fr)}#ratios button[data-aspect^="instagram"]{font-size:11.5px}.stage>.editor-tip{font-size:12px}}
+/* Keep scrolling outside the photo on the browser compositor. */
+@media(max-width:859px){.stage{will-change:transform;transition:none}.stage-toggle{backdrop-filter:none}.polaroid-container{box-shadow:0 8px 18px rgba(0,0,0,.35)}}
 </style>
 </head>
 <body>
@@ -281,7 +293,7 @@
             <button class="w on" data-frame="white">白框</button><button class="k" data-frame="black">黑框</button><button class="t" data-frame="tint">取色</button><button class="v" data-frame="vintage">復古</button><button class="f" data-frame="film">底片</button>
           </div></div>
           <div><span class="preset-label">照片比例</span><div class="ratios" id="ratios">
-            <button class="on" data-aspect="orig">原圖</button><button data-aspect="mini">Mini</button><button data-aspect="square">方框</button><button data-aspect="wide">Wide</button><button data-aspect="instagram" title="貼文 4:5"><svg class="ig-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Instagram 貼文</button><button data-aspect="instagram-story" title="限時動態 9:16 · 1080 × 1920"><svg class="ig-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Instagram 限時動態</button>
+            <button class="on" data-aspect="orig">原圖</button><button data-aspect="mini">Mini</button><button data-aspect="square">方框</button><button data-aspect="wide">Wide</button><button data-aspect="banner">橫幅</button><button data-aspect="instagram" title="貼文 4:5"><svg class="ig-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>Instagram<br>貼文</span></button><button data-aspect="instagram-story" title="限時動態 9:16 · 1080 × 1920"><svg class="ig-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>Instagram<br>限時動態</span></button>
           </div></div>
         </div>
       </section>
@@ -299,7 +311,7 @@
         <button class="pbtn ghost" id="apply-sync-btn" style="border-color: var(--fuji); color: var(--fuji);">套用設定</button>
       </div>
 
-<section class="control-panel" id="text-settings"><div class="section-heading"><h3>文字資訊</h3><p>相機資料會自動帶入</p></div><section class="text-group"><h4>顯示內容</h4><div class="row2"><label class="field"><span id="camera-display-label">相機品牌／型號 顯示</span>
+<section class="control-panel" id="text-settings"><div class="section-heading"><h3>文字資訊</h3><p>相機資料會自動帶入</p></div><section class="text-group"><div class="display-heading"><h4>顯示內容</h4><label id="shot-on-control" hidden><input id="shot-on" type="checkbox" checked> Shot on</label></div><div class="row2"><label class="field"><span id="camera-display-label">相機品牌／型號 顯示</span>
           <select id="show-cam">
             <option value="on" selected>開</option>
             <option value="off">關</option>
@@ -470,8 +482,9 @@ function refreshCameraDisplay(st){
  st.cameraParts=[{text:st.cameraBrand,mark:useLogo&&st.cameraBrandChoice==='auto'?brandKey:null},{text:st.cameraModel,mark:useLogo&&st.cameraModelChoice==='auto'?mark:null}].filter(x=>x.text);
 }
 function getCameraParts(st){return st.cameraParts||[];}
+const cameraMarkScratch=document.createElement('canvas');
 function drawCameraMark(ctx,mask,left,y,height,color) {
- const width=height*mask.width/mask.height,scale=3,pad=6,c=document.createElement('canvas');
+ const width=height*mask.width/mask.height,scale=3,pad=6,c=cameraMarkScratch;
  c.width=Math.ceil(width*scale)+pad*2;c.height=Math.ceil(height*scale)+pad*2;
  const g=c.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
  g.filter='blur(0.65px)';g.drawImage(mask,pad,pad,width*scale,height*scale);g.filter='none';
@@ -507,11 +520,13 @@ const modelLogoReady=Promise.all(['z5ii','z6','xt50'].map(key=>new Promise(resol
 Promise.all([logoReady,modelLogoReady]).then(()=>drawAll(false));
 
 // 快門音效
+let cameraAudioContext=null;
 function playCameraSound() {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    const ctx = cameraAudioContext ||= new AudioCtx();
+    if(ctx.state==='suspended')ctx.resume().catch(()=>{});
     const now = ctx.currentTime;
 
     [0.0, 0.075].forEach((delay, index) => {
@@ -528,6 +543,7 @@ function playCameraSound() {
       oscGain.connect(ctx.destination);
       osc.start(now + delay);
       osc.stop(now + delay + 0.025);
+      osc.onended=()=>{osc.disconnect();oscGain.disconnect();};
 
       const bufSize = ctx.sampleRate * 0.02;
       const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
@@ -549,6 +565,7 @@ function playCameraSound() {
       filter.connect(noiseGain);
       noiseGain.connect(ctx.destination);
 
+      noise.onended=()=>{noise.disconnect();filter.disconnect();noiseGain.disconnect();};
       noise.start(now + delay);
     });
   } catch (e) {}
@@ -587,7 +604,8 @@ function fontSizeFor(key,level){const i=[12,14,18,22].indexOf(Number(level));ret
 function textFont(key,size,weight=500) {
   return (LOCAL_FONTS[key] ? 400 : weight)+' '+size+'px '+(FONTS[key] || FONTS.sans);
 }
-const fontRequests=new Map(), failedFonts=new Set();
+const fontRequests=new Map(), failedFonts=new Set(), settledFontRequests=new Set();
+let fontRedrawFrame=0;
 let pendingFontLoads=0, exportingBatch=false;
 function updateFontStatus() {
  const status=$("#font-status");
@@ -601,10 +619,12 @@ function requestTextFont(key,weight,text) {
   pendingFontLoads++;updateFontStatus();
   const request=document.fonts.load(spec,text).then(faces=>{
    if(LOCAL_FONTS[key]&&!faces.length)throw Error('Font not loaded: '+key);
-   return true;
-  }).catch(()=>{failedFonts.add(key);return false;}).finally(()=>{
+   failedFonts.delete(key);return true;
+  }).catch(()=>{fontRequests.delete(id);failedFonts.add(key);return false;}).finally(()=>{
    pendingFontLoads--;updateFontStatus();
-   if(!exportingBatch)drawAll(false);
+   if(fontRequests.has(id))settledFontRequests.add(id);
+   while(fontRequests.size>128&&settledFontRequests.size){const oldest=settledFontRequests.values().next().value;settledFontRequests.delete(oldest);fontRequests.delete(oldest);}
+   if(!exportingBatch&&!fontRedrawFrame)fontRedrawFrame=requestAnimationFrame(()=>{fontRedrawFrame=0;if(!exportingBatch)drawAll(false);});
   });
   fontRequests.set(id,request);
  }
@@ -634,10 +654,10 @@ function createDefaultItemState() {
     aspect: "orig",
     crop: { z: 1, x: 0, y: 0 },
     pos: { left: 6, right: 6 },
-    dateSide: "left",
+    dateSide: "left", bannerDateSide:"bottom",
     datePos: 18,
     cam: "", lens: "", iso: "", fnum: "", shut: "", dateText: "",
-    noteText: "", showCam: "on", showExp: "off",
+    noteText: "", showCam: "on", showExp: "off", shotOn:true,
     font: "huninn", noteFont: "huninn", noteSize: "14",
     cameraBrandChoice:"auto",cameraModelChoice:"auto",cameraBrand:"",cameraModel:"",cameraParts:[],rawExif:{},isPhone:false,
     color: "#000000",
@@ -657,7 +677,6 @@ function syncStateFromUI() {
   if(activeState.cameraModelChoice==='manual')activeState.manualModel=$("#cam").value;
   activeState.cameraBrand=activeState.cameraBrandChoice==='auto'?activeState.autoBrand||'':CAMERA_BRANDS[activeState.cameraBrandChoice] || (activeState.cameraBrandChoice==='manual'?$("#camera-brand-text").value.trim():'');
   activeState.cameraModel=activeState.cameraModelChoice==='auto'?activeState.autoModel||'':CAMERA_MODELS[activeState.cameraModelChoice]?.text || (activeState.cameraModelChoice==='manual'?$("#cam").value.trim():'');
-  activeState.cam=[activeState.cameraBrand,activeState.cameraModel].filter(Boolean).join(' ');
   activeState.lensChoice=$('#lens-source').value;
   if(activeState.lensChoice==='manual'&&!activeState.isPhone)activeState.manualLens=$('#lens').value;
   activeState.lens=activeState.lensChoice==='auto'?activeState.autoLens||'':activeState.lensChoice==='manual'?activeState.manualLens||'':'';
@@ -670,6 +689,7 @@ function syncStateFromUI() {
   activeState.noteFont = $("#note-font").value;
   activeState.noteSize = $("#note-size").value;
   activeState.color = $("#color").value;
+  activeState.shotOn=$("#shot-on").checked;
   activeState.sizeLeft = $("#size-left").value;
   activeState.dateOn = $("#date-on").value;
   activeState.dateSize = $("#date-size").value;
@@ -702,18 +722,23 @@ function syncUIFromState() {
   $("#note-font").value = activeState.noteFont || activeState.font || "sans";
   $("#note-size").value = activeState.noteSize || "14";
   $("#color").value = activeState.color || "#000000";
+  $("#shot-on").checked=activeState.shotOn!==false;$("#shot-on-control").hidden=activeState.aspect!=="banner";
   $("#size-left").value = activeState.sizeLeft || "14";
   $("#date-on").value = activeState.dateOn || "off";
   $("#date-size").value = activeState.dateSize || "12";
 
   document.querySelectorAll(".frames button").forEach(x => x.classList.toggle("on", x.dataset.frame === activeState.frameStyle));
   document.querySelectorAll("#ratios button").forEach(x => x.classList.toggle("on", x.dataset.aspect === activeState.aspect));
-  document.querySelectorAll("#date-sides button").forEach(x => x.classList.toggle("on", x.dataset.side === activeState.dateSide));
+  syncDateSides();
   
   toggleExifInputs();
   updateSyncSelectOptions();
 }
 
+function syncDateSides(){
+ const banner=activeState.aspect==='banner',values=banner?['top','bottom']:['left','right'],labels=banner?['上','下']:['左側','右側'],selected=banner?(activeState.bannerDateSide||'bottom'):activeState.dateSide;
+ document.querySelectorAll('#date-sides button').forEach((button,i)=>{button.dataset.side=values[i];button.textContent=labels[i];button.classList.toggle('on',values[i]===selected);});
+}
 function migrateSources(st){
  for(const [choice,text,manual] of [['cameraBrandChoice','cameraBrand','manualBrand'],['cameraModelChoice','cameraModel','manualModel']]){
   if(!['auto','manual','none'].includes(st[choice])){st[choice]=st[text]?'manual':'auto';st[manual]=st[text]||'';}
@@ -726,7 +751,6 @@ function hasExposureData(st) {
   return !!st && [st.iso,st.fnum,st.shut].some(value=>String(value||'').trim());
 }
 function toggleExifInputs() {
-  const showCam = $("#show-cam").value === "on";
   const available = hasExposureData(activeState);
   $("#exposure-display-field").style.display="grid";
   $("#exposure-display-field").style.visibility=available?"visible":"hidden";
@@ -758,7 +782,107 @@ function updateSyncSelectOptions() {
   });
 }
 
+
+// Layout is memoized independently of color and photographic pixels.
+let bannerLayoutCache=null;
+function bannerLayout(){
+ const st=activeState,key=JSON.stringify([st.cam,st.cameraParts,st.lens,st.isPhone,st.showCam,st.showExp,st.iso,st.fnum,st.shut,st.shotOn,st.font,st.sizeLeft,pendingFontLoads,Object.keys(logoMasks).length]);
+ if(bannerLayoutCache?.key===key)return bannerLayoutCache.value;
+ const ctx=document.createElement('canvas').getContext('2d'),font=st.font||'huninn',size=fontSizeFor(font,st.sizeLeft)*1920/360*.26;
+ const rows=[],parts=st.showCam==='on'?getCameraParts(st):[];
+ if(parts.length&&st.shotOn!==false)rows.push({text:'Shot on',size:size*1.15});
+ if(parts.length)rows.push({parts,size:size*.8});
+ if(!st.isPhone&&st.lens)rows.push({text:st.lens,size:size*.72});
+ if(st.showExp==='on'&&hasExposureData(st))rows.push({text:[st.fnum,st.shut,st.iso&&'ISO '+st.iso].filter(Boolean).join('  '),size:size*.56});
+ let wanted=290;
+ for(const row of rows){ctx.font=textFont(font,row.size,500);const width=row.parts?row.parts.reduce((n,x)=>n+(x.mark&&logoMasks[x.mark]?cameraMarkLayout(x.mark,row.size).width:ctx.measureText(x.text).width),0)+(row.parts.length-1)*row.size*.45:ctx.measureText(row.text).width;wanted=Math.max(wanted,width+48);}
+ const infoWidth=Number(st.sizeLeft)===22?290:Math.ceil(Math.min(740,wanted)),sideMargin=60+infoWidth+50,photoW=Math.floor(Math.min(1455,1860-sideMargin)/3)*3,photoH=photoW*2/3,topMargin=55+(970-photoH)/2;
+ const value={photoDim:{w:photoW,h:photoH},sideMargin,topMargin,bottomMargin:150,safeBottom:0,totalW:1920,totalH:1080,infoWidth,rows,font};bannerLayoutCache={key,value};return value;
+}
+function bannerLines(ctx,text,width){const lines=[];let line='';for(const ch of Array.from(text)){if(ch==='\n'){lines.push(line);line='';continue;}if(line&&ctx.measureText(line+ch).width>width){lines.push(line);line=ch;}else line+=ch;}if(line)lines.push(line);return lines;}
+function drawFrameBackground(ctx,{totalW,totalH,sideMargin,safeBottom=0,bottomMargin=0},banner=false){
+ ctx.save();
+  const frameStyle = activeState.frameStyle;
+  if (frameStyle === "black") {
+    ctx.fillStyle = "#111111";
+    ctx.fillRect(0, 0, totalW, totalH);
+  } else if (frameStyle === "tint") {
+    if (activeState.source) {
+      ctx.save();
+      ctx.filter = "blur(30px) brightness(0.85)";
+      ctx.drawImage(activeState.source, -totalW * 0.1, -totalH * 0.1, totalW * 1.2, totalH * 1.2);
+      ctx.restore();
+    }
+    const m = activeState.tintColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    ctx.fillStyle = m ? `rgba(${m[1]},${m[2]},${m[3]},0.58)` : "rgba(100,80,70,0.58)";
+    ctx.fillRect(0, 0, totalW, totalH);
+  } else if (frameStyle === "vintage") {
+    ctx.fillStyle = "#ebdcc4";
+    ctx.fillRect(0, 0, totalW, totalH);
+    ctx.fillStyle = "rgba(110,80,40,0.05)";
+    for (let i = 0; i < totalW; i += 8) {
+      for (let j = 0; j < totalH; j += 8) {
+        if ((i + j) % 3 === 0) ctx.fillRect(i, j, 4, 4);
+      }
+    }
+    ctx.strokeStyle = "rgba(120,90,50,0.2)";
+    ctx.lineWidth = banner ? 4 : Math.round(totalW * 0.005);
+    if(banner)ctx.strokeRect(10,10,totalW-20,totalH-20);else ctx.strokeRect(sideMargin * 0.4, sideMargin * 0.4, totalW - sideMargin * 0.8, totalH - sideMargin * 0.8);
+  } else if (frameStyle === "film") {
+    ctx.fillStyle = "#0d0d0d";
+    ctx.fillRect(0, 0, totalW, totalH);
+    ctx.fillStyle = "#1f1f1f";
+    const holeW = Math.round(sideMargin * 0.4);
+    const holeH = Math.round(holeW * 1.3);
+    for (let y = sideMargin; y < totalH - sideMargin; y += holeH * 1.8) {
+      ctx.fillRect(sideMargin * 0.3, y, holeW, holeH);
+      ctx.fillRect(totalW - sideMargin * 0.3 - holeW, y, holeW, holeH);
+    }
+    ctx.fillStyle = "#e09f3e";
+    ctx.font = `700 ${Math.round(totalW * 0.02)}px ${FONTS.mono}`;
+    if(banner){ctx.textAlign="left";ctx.textBaseline="bottom";ctx.font=`700 18px ${FONTS.mono}`;ctx.fillText("▶ 12A",60,totalH-12);}else ctx.fillText("▶ 12A", totalW - sideMargin * 2, totalH - safeBottom - bottomMargin * 0.25);
+  } else {
+    ctx.fillStyle = banner ? "#ffffff" : "#f7f3ec";
+    ctx.fillRect(0, 0, totalW, totalH);
+  }
+ ctx.restore();
+}
+let bannerTintSample=null;
+function drawBanner(){
+ const st=activeState,g=bannerLayout(),canvas=$('#mainCanvas'),ctx=canvas.getContext('2d');if(canvas.width!==1920)canvas.width=1920;if(canvas.height!==1080)canvas.height=1080;
+ const {sideMargin:x,topMargin:y,photoDim:photo}=g;
+ const sampleKey=[photo.w,photo.h,st.crop.z,st.crop.x,st.crop.y].join('|');
+ if(st.frameStyle==='tint'&&st.source&&(bannerTintSample?.source!==st.source||bannerTintSample.key!==sampleKey)){
+ const sample=document.createElement('canvas');sample.width=photo.w;sample.height=photo.h;const sg=sample.getContext('2d'),r=coverRect(photo.w,photo.h);sg.drawImage(st.source,r.x,r.y,r.dw,r.dh);sampleTint(sg,0,0,photo.w,photo.h);bannerTintSample={source:st.source,key:sampleKey};
+ }
+ const bgKey=['banner',st.frameStyle,st.tintColor,x,y,photo.w,photo.h,st.crop.z,st.crop.x,st.crop.y].join('|');
+ if(backgroundCache?.source===st.source&&backgroundCache.key===bgKey)ctx.drawImage(backgroundCache.canvas,0,0);else{
+ drawFrameBackground(ctx,{totalW:1920,totalH:1080,sideMargin:60},true);ctx.save();ctx.beginPath();ctx.rect(x,y,photo.w,photo.h);ctx.clip();if(st.source){const r=coverRect(photo.w,photo.h);ctx.drawImage(st.source,x+r.x,y+r.y,r.dw,r.dh);}else{ctx.fillStyle='#cfc6b8';ctx.fillRect(x,y,photo.w,photo.h);}ctx.restore();
+ const layer=document.createElement('canvas');layer.width=1920;layer.height=1080;layer.getContext('2d').drawImage(canvas,0,0);backgroundCache={source:st.source,key:bgKey,canvas:layer};}
+ const rows=[];for(const row of g.rows){
+ let size=row.size;ctx.font=textFont(g.font,size,500);
+ if(Number(st.sizeLeft)===22){const measured=row.parts?row.parts.reduce((n,part)=>n+(part.mark&&logoMasks[part.mark]?cameraMarkLayout(part.mark,size).width:ctx.measureText(part.text).width),0)+Math.max(0,row.parts.length-1)*size*.45:ctx.measureText(row.text).width;
+ if(row.parts&&!row.parts.some(part=>part.mark)&&measured>(g.infoWidth-40)/.6){size*=.6;ctx.font=textFont(g.font,size,500);for(const text of bannerLines(ctx,row.parts.map(part=>part.text).join(' '),g.infoWidth-40))rows.push({text,size});continue;}
+ size*=Math.min(1,Math.max(row.parts?0:.6,(g.infoWidth-40)/Math.max(1,measured)));ctx.font=textFont(g.font,size,500);}
+ if(row.parts)rows.push({...row,size});else for(const text of bannerLines(ctx,row.text,g.infoWidth-40))rows.push({...row,text,size});
+ }
+ const gap=6,natural=rows.reduce((n,r)=>n+r.size*1.25,0)+Math.max(0,rows.length-1)*gap,scale=Math.min(1,900/Math.max(1,natural));
+ ctx.save();ctx.beginPath();ctx.rect(60,60,g.infoWidth,960);ctx.clip();ctx.fillStyle=st.color;ctx.textBaseline='middle';ctx.textAlign='center';let rowY=540-natural*scale/2;
+ for(const row of rows){const h=row.size*scale;if(row.parts){ctx.textBaseline='top';drawCameraLine(ctx,row.parts,60+g.infoWidth/2,rowY,h,st.color,g.font,g.infoWidth-40);ctx.textBaseline='middle';}else{ctx.font=textFont(g.font,h,500);ctx.fillText(row.text,60+g.infoWidth/2,rowY+h*.625,g.infoWidth-40);}rowY+=h*1.25+gap*scale;}ctx.restore();
+ const captionY=y+photo.h+10,captionH=Math.min(140,1080-captionY-10),date=st.dateOn==='on'?(st.dateText||'').trim():'',dateTop=st.bannerDateSide==='top';
+ const dateAreaH=dateTop?y-20:1080-captionY-10;
+ let dateSize=Math.min((Number(st.dateSize)||12)*1920/360*.38,Math.max(1,dateAreaH/1.2));
+ ctx.fillStyle=st.color;ctx.textBaseline='top';ctx.font=textFont(g.font,dateSize,500);
+ const naturalDateWidth=date?ctx.measureText(date).width:0;
+ if(naturalDateWidth>photo.w*.42){dateSize*=photo.w*.42/naturalDateWidth;ctx.font=textFont(g.font,dateSize,500);}
+ const dateWidth=date?ctx.measureText(date).width:0,dateY=dateTop?y-10-dateSize*1.2:captionY;
+ if(date){ctx.save();ctx.beginPath();ctx.rect(x,dateTop?10:captionY,photo.w,Math.max(0,dateAreaH));ctx.clip();ctx.textAlign='right';ctx.fillText(date,x+photo.w,dateY);ctx.restore();}
+ if(st.noteText){const width=photo.w-(date&&!dateTop?dateWidth+28:0),size=fontSizeFor(st.noteFont,st.noteSize)*1920/360*.30;ctx.font=textFont(st.noteFont,size,500);ctx.textAlign='left';ctx.save();ctx.beginPath();ctx.rect(x,captionY,width,captionH);ctx.clip();bannerLines(ctx,st.noteText,width).slice(0,Math.max(1,Math.floor(captionH/(size*1.2)))).forEach((text,i)=>ctx.fillText(text,x,captionY+i*size*1.2));ctx.restore();}
+ $('#note-layout-help').hidden=true;
+}
+
 function getTargetPhotoSize() {
+  if(activeState?.aspect==='banner')return bannerLayout().photoDim;
   if (activeState?.aspect === "instagram-story") return { w:980, h:1240 };
   if (activeState?.aspect === "instagram") return { w:1400, h:1645 };
   if (!activeState || !activeState.source) return { w: 1400, h: 1050 };
@@ -772,6 +896,7 @@ function getTargetPhotoSize() {
 }
 
 function getCardGeometry() {
+  if(activeState?.aspect==='banner')return bannerLayout();
   const photoDim=getTargetPhotoSize(),story=activeState?.aspect==='instagram-story';
   const sideMargin=story?50:Math.round(photoDim.w*.05);
   const topMargin=story?250:sideMargin;
@@ -802,6 +927,7 @@ function drawAll(sync = true) {
   const canvas = $("#mainCanvas");
   const ctx = canvas.getContext("2d");
   
+  if(activeState?.aspect==='banner'){drawBanner();return;}
   const {photoDim,sideMargin,topMargin,bottomMargin,safeBottom,totalW,totalH}=getCardGeometry();
   
   if(canvas.width!==totalW)canvas.width=totalW;
@@ -825,49 +951,7 @@ function drawAll(sync = true) {
    const sg=sample.getContext('2d'),r=coverRect(photoDim.w,photoDim.h);
    sg.drawImage(activeState.source,r.x,r.y,r.dw,r.dh);sampleTint(sg,0,0,photoDim.w,photoDim.h);
   }
-  const frameStyle = activeState.frameStyle;
-  if (frameStyle === "black") {
-    ctx.fillStyle = "#111111";
-    ctx.fillRect(0, 0, totalW, totalH);
-  } else if (frameStyle === "tint") {
-    if (activeState.source) {
-      ctx.save();
-      ctx.filter = "blur(30px) brightness(0.85)";
-      ctx.drawImage(activeState.source, -totalW * 0.1, -totalH * 0.1, totalW * 1.2, totalH * 1.2);
-      ctx.restore();
-    }
-    const m = activeState.tintColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-    ctx.fillStyle = m ? `rgba(${m[1]},${m[2]},${m[3]},0.58)` : "rgba(100,80,70,0.58)";
-    ctx.fillRect(0, 0, totalW, totalH);
-  } else if (frameStyle === "vintage") {
-    ctx.fillStyle = "#ebdcc4";
-    ctx.fillRect(0, 0, totalW, totalH);
-    ctx.fillStyle = "rgba(110,80,40,0.05)";
-    for (let i = 0; i < totalW; i += 8) {
-      for (let j = 0; j < totalH; j += 8) {
-        if ((i + j) % 3 === 0) ctx.fillRect(i, j, 4, 4);
-      }
-    }
-    ctx.strokeStyle = "rgba(120,90,50,0.2)";
-    ctx.lineWidth = Math.round(totalW * 0.005);
-    ctx.strokeRect(sideMargin * 0.4, sideMargin * 0.4, totalW - sideMargin * 0.8, totalH - sideMargin * 0.8);
-  } else if (frameStyle === "film") {
-    ctx.fillStyle = "#0d0d0d";
-    ctx.fillRect(0, 0, totalW, totalH);
-    ctx.fillStyle = "#1f1f1f";
-    const holeW = Math.round(sideMargin * 0.4);
-    const holeH = Math.round(holeW * 1.3);
-    for (let y = sideMargin; y < totalH - sideMargin; y += holeH * 1.8) {
-      ctx.fillRect(sideMargin * 0.3, y, holeW, holeH);
-      ctx.fillRect(totalW - sideMargin * 0.3 - holeW, y, holeW, holeH);
-    }
-    ctx.fillStyle = "#e09f3e";
-    ctx.font = `700 ${Math.round(totalW * 0.02)}px ${FONTS.mono}`;
-    ctx.fillText("▶ 12A", totalW - sideMargin * 2, totalH - safeBottom - bottomMargin * 0.25);
-  } else {
-    ctx.fillStyle = "#f7f3ec";
-    ctx.fillRect(0, 0, totalW, totalH);
-  }
+  drawFrameBackground(ctx,{totalW,totalH,sideMargin,safeBottom,bottomMargin});
 
 
   
@@ -898,9 +982,7 @@ function drawAll(sync = true) {
 
   const captionY = photoY + photoDim.h + Math.round(bottomMargin * 0.18);
 
-  const leftX = photoX + (activeState.pos.left / 100) * photoDim.w;
   const showCam = activeState.showCam === "on";
-  const camText = showCam ? (activeState.cam.trim() || "") : "";
   const lensText = !activeState.isPhone ? activeState.lens.trim() : "";
   const noteText = activeState.noteText.trim();
 
@@ -1038,10 +1120,10 @@ function sampleTint(ctx, px, py, pw, ph) {
   try {
     const step = Math.max(12, Math.floor(Math.min(pw, ph) / 20));
     let r = 0, g = 0, b = 0, n = 0;
-    const imgData = ctx.getImageData(px, py, pw, ph).data;
     for (let y = 0; y < ph; y += step) {
+      const imgData=ctx.getImageData(px,py+y,pw,1).data;
       for (let x = 0; x < pw; x += step) {
-        const i = (y * pw + x) * 4;
+        const i = x * 4;
         r += imgData[i]; g += imgData[i + 1]; b += imgData[i + 2]; n++;
       }
     }
@@ -1063,15 +1145,6 @@ function fmtF(v){
   return "f/" + n.replace(/\.0$/, "");
 }
 
-function cleanCam(make, model){
-  model = (model || "").replace(/^FUJIFILM\s+/i, "").trim();
-  make = (make || "").trim();
-  if (/^(?:SONY\s+)?ILCE-7CM2$/i.test(model)) return "SONY α7C II";
-  if (!model && !make) return "";
-  if (model && make && !/fuji/i.test(make) && !model.toUpperCase().includes(make.split(" ")[0].toUpperCase()))
-    return (make + " " + model).trim();
-  return model || make;
-}
 
 async function readExif(buf){
   const u8 = new Uint8Array(buf);
@@ -1160,6 +1233,7 @@ async function processSingleFile(file) {
   itemState.thumbUrl = URL.createObjectURL(blob);
   
   try {
+  try {
     itemState.source = await createImageBitmap(blob, { imageOrientation: "from-image" });
   } catch(e) {
     try {
@@ -1172,6 +1246,7 @@ async function processSingleFile(file) {
     }
   }
   return itemState;
+  }catch(error){URL.revokeObjectURL(itemState.thumbUrl);itemState.source?.close?.();throw error;}
 }
 
 let addingFiles=false;
@@ -1198,8 +1273,7 @@ async function appendFiles(files) {
     currentIndex = Math.min(firstNewIndex,itemsList.length-1);
     activeState = itemsList[currentIndex];
     renderThumbnails();
-    syncUIFromState();
-    drawAll();
+    syncUIFromState();prepareTextFonts(activeState);drawAll(false);
   }
 }
 
@@ -1225,8 +1299,7 @@ function deletePhoto(idx, e) {
   }
 
   renderThumbnails();
-  syncUIFromState();
-  drawAll();
+  syncUIFromState();prepareTextFonts(activeState);drawAll(false);
 }
 
 function renderThumbnails() {
@@ -1268,8 +1341,7 @@ function renderThumbnails() {
       currentIndex = idx;
       activeState = itemsList[idx];
       renderThumbnails();
-      syncUIFromState();
-      drawAll();
+      syncUIFromState();prepareTextFonts(activeState);drawAll(false);
     };
 
     container.appendChild(div);
@@ -1294,27 +1366,33 @@ function renderThumbnails() {
   updateSyncSelectOptions();
 }
 
+function downloadBlob(blob,name){
+ if(!blob)throw Error('無法產生圖片，請重試。');
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;
+ try{a.click();}finally{setTimeout(()=>URL.revokeObjectURL(url),1000);}
+}
 async function exportCard() {
+  if(exportingBatch||addingFiles)return;
   syncStateFromUI();
   if(!await prepareTextFonts(activeState)){alert('字體尚未成功載入，請確認字體檔案後重試。');return;}
   await Promise.all([logoReady,modelLogoReady]); await document.fonts.ready;
+  if(exportingBatch)return;
   if (!activeState || !activeState.source) { alert("先上傳照片"); return; }
-  drawAll();
+  drawAll(false);
   flash();
   const canvas = $("#mainCanvas");
   canvas.toBlob(function(b) {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(b);
-    a.download = `polaroid_${currentIndex + 1}.png`;
-    a.click();
+    if(b)downloadBlob(b,`polaroid_${currentIndex + 1}.png`);
   }, "image/png");
 }
 
 // 快速分享當前照片 (支援 Web Share API，桌面降級為複製到剪貼簿)
 async function shareCard() {
+  if(exportingBatch||addingFiles)return;
   syncStateFromUI();
   if(!await prepareTextFonts(activeState)){alert('字體尚未成功載入，請確認字體檔案後重試。');return;}
   await Promise.all([logoReady,modelLogoReady]); await document.fonts.ready;
+  if(exportingBatch)return;
   if (!activeState || !activeState.source) { alert("先上傳照片"); return; }
   drawAll();
   flash();
@@ -1352,40 +1430,31 @@ async function shareCard() {
 }
 
 async function exportAllCards() {
-  syncStateFromUI();
-  const ready=await Promise.all(itemsList.map(prepareTextFonts));
-  if(ready.includes(false)){alert('部分字體未成功載入，請確認字體檔案後重試。');return;}
-  await Promise.all([logoReady,modelLogoReady]); await document.fonts.ready;
-  if (!itemsList.length || !window.JSZip) {
-    alert("請先讀取照片或確認網路連接");
-    return;
-  }
-  syncStateFromUI();
-  flash();
-  const zip = new JSZip();
-
-  exportingBatch=true;
-  try {
-  for (let i = 0; i < itemsList.length; i++) {
-    activeState = itemsList[i];
-    drawAll(false);
-    const canvas = $("#mainCanvas");
-    const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
-    zip.file(`polaroid_${i + 1}.png`, blob);
-  }
-
-  } finally {
-    exportingBatch=false;
-    activeState = itemsList[currentIndex];
-    drawAll(false);
-  }
-
-  const content = await zip.generateAsync({ type: "blob" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(content);
-  a.download = "polaroids_batch.zip";
-  a.click();
+ if(exportingBatch||addingFiles)return;
+ syncStateFromUI();
+ if(!itemsList.length||!window.JSZip){alert('請先讀取照片或確認 ZIP 工具已載入。');return;}
+ const selected=activeState,selectedIndex=currentIndex,photos=[...itemsList],shell=$('.editor-shell'),wasInert=shell.inert;
+ exportingBatch=true;shell.inert=true;shell.setAttribute('aria-busy','true');
+ if(colorFrame){cancelAnimationFrame(colorFrame);colorFrame=0;}
+ try{
+ const ready=await Promise.all(photos.map(prepareTextFonts));
+ if(ready.includes(false)){alert('部分字體未成功載入，請確認字體檔案後重試。');return;}
+ await Promise.all([logoReady,modelLogoReady]);await document.fonts.ready;flash();
+ const zip=new JSZip();
+ for(let i=0;i<photos.length;i++){
+ activeState=photos[i];drawAll(false);
+ const blob=await new Promise(resolve=>$('#mainCanvas').toBlob(resolve,'image/png'));
+ if(!blob)throw Error('無法產生第 '+(i+1)+' 張照片');
+ zip.file('polaroid_'+(i+1)+'.png',blob);
+ }
+ downloadBlob(await zip.generateAsync({type:'blob'}),'polaroids_batch.zip');
+ }catch(error){alert('批次匯出失敗：'+error.message);}
+ finally{activeState=selected;currentIndex=selectedIndex;exportingBatch=false;shell.inert=wasInert;shell.removeAttribute('aria-busy');syncUIFromState();drawAll(false);}
 }
+// Ignore editing events during the shared-canvas batch transaction.
+for(const type of ['input','change','click'])document.addEventListener(type,event=>{
+ if(exportingBatch&&event.target.closest?.('.editor-shell')){if(event.cancelable)event.preventDefault();event.stopImmediatePropagation();}
+},{capture:true,passive:false});
 
 function applySyncFromSelectedPhoto() {
   const select = $("#sync-source-select");
@@ -1401,6 +1470,7 @@ function applySyncFromSelectedPhoto() {
   activeState.dateOn = targetState.dateOn;
   activeState.datePos = targetState.datePos;
   activeState.dateSide = targetState.dateSide;
+  activeState.bannerDateSide = targetState.bannerDateSide || 'bottom';
   activeState.dateSize = targetState.dateSize;
   activeState.color = targetState.color;
   activeState.font = targetState.font;
@@ -1409,8 +1479,7 @@ function applySyncFromSelectedPhoto() {
   activeState.sizeLeft = targetState.sizeLeft;
   activeState.pos = { ...targetState.pos };
 
-  syncUIFromState();
-  drawAll();
+  syncUIFromState();prepareTextFonts(activeState);drawAll(false);
 }
 
 function toggleCameraManual() {
@@ -1423,6 +1492,7 @@ function toggleCameraManual() {
 }));
 
 $('#lens-source').addEventListener('change',()=>{toggleLensManual();drawAll();});
+$('#shot-on').addEventListener('change',drawAll);
 $('#color').addEventListener('input',queueColorPreview);
 $('#color').addEventListener('change',()=>{activeState.color=$('#color').value;flushColorPreview();});
 // 事件繫結
@@ -1458,6 +1528,8 @@ document.querySelectorAll("#ratios button").forEach(b => {
   b.onclick = () => {
     if (!activeState) return;
     activeState.aspect = b.dataset.aspect;
+    syncDateSides();
+    $("#shot-on-control").hidden=activeState.aspect!=="banner";
     document.querySelectorAll("#ratios button").forEach(x => x.classList.toggle("on", x.dataset.aspect === activeState.aspect));
     activeState.crop = { z: 1, x: 0, y: 0 };
     drawAll();
@@ -1467,7 +1539,7 @@ document.querySelectorAll("#ratios button").forEach(b => {
 document.querySelectorAll("#date-sides button").forEach(b => {
   b.onclick = () => {
     if (!activeState) return;
-    activeState.dateSide = b.dataset.side;
+    if(activeState.aspect==='banner')activeState.bannerDateSide=b.dataset.side;else activeState.dateSide=b.dataset.side;
     document.querySelectorAll("#date-sides button").forEach(x => x.classList.toggle("on", x.dataset.side === activeState.dateSide));
     drawAll();
   };
@@ -1493,11 +1565,11 @@ async function replacePickedPhoto(target,file){
   const index=itemsList.indexOf(target);
   if(target&&index<0){URL.revokeObjectURL(next.thumbUrl);next.source?.close?.();return;}
   if(target){
-   for(const key of ['frameStyle','aspect','font','noteFont','noteSize','noteText','color','sizeLeft','showCam','showExp','dateOn','dateSize','dateSide','datePos'])next[key]=target[key];
+   for(const key of ['frameStyle','aspect','font','noteFont','noteSize','noteText','color','sizeLeft','showCam','showExp','dateOn','dateSize','dateSide','bannerDateSide','datePos','shotOn'])next[key]=target[key];
    if(!hasExposureData(next))next.showExp='off';
    itemsList[index]=next;currentIndex=index;URL.revokeObjectURL(target.thumbUrl);target.source?.close?.();
   }else{itemsList.push(next);currentIndex=itemsList.length-1;}
-  activeState=next;renderThumbnails();syncUIFromState();drawAll();
+  activeState=next;renderThumbnails();syncUIFromState();prepareTextFonts(activeState);drawAll(false);
  }finally{addingFiles=false;}
 }
 $('#file').addEventListener('cancel',()=>{pendingPhotoTarget=undefined;$('#file').multiple=true;});
@@ -1541,6 +1613,7 @@ $("#file").addEventListener("change", e => {
   };
 
   const down = e => {
+    if(exportingBatch)return;
     if(!e.touches&&(e.button!==0||Date.now()<ignoreMouseUntil))return;
     if(e.touches)ignoreMouseUntil=Date.now()+800;
     const point=pt(e);
@@ -1548,6 +1621,7 @@ $("#file").addEventListener("change", e => {
     else tap={x:point.clientX,y:point.clientY,moved:false,eligible:inPhoto(getCanvasCoords(e))&&Date.now()>wheelUntil};
     sx=point.clientX;sy=point.clientY;
     if (!activeState || !activeState.source) return;
+    if(activeState.aspect==='banner'&&!inPhoto(getCanvasCoords(e)))return;
     
     if (e.touches && e.touches.length >= 2) {
       pinching = true;
@@ -1564,10 +1638,10 @@ $("#file").addEventListener("change", e => {
 
     if (y > captionY) {
       return;
-    } else if ($("#date-on").value === "on" && x < sideMargin * 2 && activeState.dateSide === "left") {
+    } else if (activeState.aspect!=="banner" && $("#date-on").value === "on" && x < sideMargin * 2 && activeState.dateSide === "left") {
       mode = "stamp";
       startPosVal = activeState.datePos;
-    } else if ($("#date-on").value === "on" && x > canvas.width - sideMargin * 2 && activeState.dateSide === "right") {
+    } else if (activeState.aspect!=="banner" && $("#date-on").value === "on" && x > canvas.width - sideMargin * 2 && activeState.dateSide === "right") {
       mode = "stamp";
       startPosVal = activeState.datePos;
     } else {
@@ -1582,6 +1656,7 @@ $("#file").addEventListener("change", e => {
   };
 
   const move = e => {
+    if(exportingBatch){mode=null;tap=null;pinching=false;return;}
     if(!e.touches&&Date.now()<ignoreMouseUntil)return;
     if(tap&&Math.hypot(pt(e).clientX-tap.x,pt(e).clientY-tap.y)>6)tap.moved=true;
     if (!mode || !activeState) return;
@@ -1606,12 +1681,6 @@ $("#file").addEventListener("change", e => {
     if (mode === "crop") {
       activeState.crop.x = ox + dx;
       activeState.crop.y = oy + dy;
-    } else if (mode === "textL") {
-      const deltaPercent = (dx / photoDim.w) * 100;
-      activeState.pos.left = Math.max(2, Math.min(45, startPosVal + deltaPercent));
-    } else if (mode === "textR") {
-      const deltaPercent = (-dx / photoDim.w) * 100;
-      activeState.pos.right = Math.max(2, Math.min(45, startPosVal + deltaPercent));
     } else if (mode === "stamp") {
       const deltaPercent = (dy / photoDim.h) * 100;
       activeState.datePos = Math.max(4, Math.min(86, startPosVal + deltaPercent));
@@ -1621,6 +1690,9 @@ $("#file").addEventListener("change", e => {
   };
 
   const up = e => {
+    if(exportingBatch){mode=null;tap=null;pinching=false;return;}
+    // Ignore page touches that did not begin a canvas gesture.
+    if (!tap && !mode && !pinching) return;
     if(!e.changedTouches&&Date.now()<ignoreMouseUntil)return;
     if(e.touches?.length)return;
     const point=e.changedTouches?.[0]||e;
@@ -1636,10 +1708,11 @@ $("#file").addEventListener("change", e => {
   window.addEventListener("mouseup", up);
 
   canvas.addEventListener("touchstart", down, { passive: false });
-  window.addEventListener("touchmove", move, { passive: false });
-  window.addEventListener("touchend", up, {passive:false});
+  canvas.addEventListener("touchmove", move, { passive: false });
+  canvas.addEventListener("touchend", up, {passive:false});
 
   canvas.addEventListener("wheel", e => {
+    if(exportingBatch)return;
     wheelUntil=Date.now()+350;if(tap)tap.moved=true;
     if (!activeState || !activeState.source) return;
     e.preventDefault();
@@ -1656,8 +1729,12 @@ $("#file").addEventListener("change", e => {
   if (!stage || !canvas || !toggle) return;
 
   function isMobile() { return window.innerWidth <= 859; }
+  let sizingWidth=window.innerWidth, sizingHeight=window.innerHeight;
 
   function apply() {
+    if(window.innerWidth!==sizingWidth){sizingWidth=window.innerWidth;sizingHeight=window.innerHeight;}
+    const banner = activeState?.aspect === 'banner';
+    document.body.classList.toggle('banner-preview', banner);
     if (!isMobile()) {
       canvas.style.width = "";
       canvas.style.height = "";
@@ -1666,17 +1743,18 @@ $("#file").addEventListener("change", e => {
     if (!canvas.width || !canvas.height) return;
 
     const collapsed = stage.classList.contains("collapsed");
-    const maxW = Math.min(window.innerWidth * 0.78, 320);
-    // 收合時只留一小條，展開時最多用掉約 40% 的視窗高度
-    const maxH = collapsed ? 92 : Math.max(160, window.innerHeight * 0.4);
+    const maxW = banner ? Math.max(1,stage.clientWidth-16) : Math.min(window.innerWidth * 0.78, 320);
+    // Only banner expands; other ratios retain their original preview limits.
+    const maxH = collapsed ? 92 : (banner ? Infinity : Math.max(160, sizingHeight * 0.4));
     const ratio = canvas.width / canvas.height;
 
     let w = maxW;
     let h = w / ratio;
     if (h > maxH) { h = maxH; w = h * ratio; }
 
-    canvas.style.width = Math.round(w) + "px";
-    canvas.style.height = Math.round(h) + "px";
+    const nextW=Math.round(w)+"px",nextH=Math.round(h)+"px";
+    if(canvas.style.width!==nextW)canvas.style.width=nextW;
+    if(canvas.style.height!==nextH)canvas.style.height=nextH;
   }
 
   toggle.addEventListener("click", () => {
@@ -1701,7 +1779,10 @@ $("#file").addEventListener("change", e => {
   apply();
 })();
 
-syncUIFromState();drawAll();
+syncUIFromState();prepareTextFonts(activeState);drawAll(false);
 </script>
 </body>
 </html>
+
+
+

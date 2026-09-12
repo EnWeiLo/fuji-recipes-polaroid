@@ -439,10 +439,6 @@ async function uploadPhoto(rid, pid){
   }
   return true;
 }
-async function removeCloudPhoto(rid, pid){
-  if(!cloudUser) return;
-  await sb.storage.from("photos").remove([photoPath(rid,pid)]);
-}
 async function ensurePhotoLocal(rid, pid){
   const have = await getPhotoBlob(pid);
   if(have) return true;
@@ -543,9 +539,22 @@ function openDB(){
   });
   return dbp;
 }
-async function putPhoto(id, blob){ const db=await openDB(); await new Promise((res,rej)=>{ const tx=db.transaction("p","readwrite"); tx.objectStore("p").put(blob,id); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
-async function getPhotoURL(id){ const db=await openDB(); return new Promise((res,rej)=>{ const q=db.transaction("p").objectStore("p").get(id); q.onsuccess=()=>res(q.result?URL.createObjectURL(q.result):""); q.onerror=()=>rej(q.error); }); }
-async function delPhoto(id){ const db=await openDB(); await new Promise((res,rej)=>{ const tx=db.transaction("p","readwrite"); tx.objectStore("p").delete(id); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+const photoURLs=new Map();
+function releasePhotoURL(id){if(photoURLs.has(id)){URL.revokeObjectURL(photoURLs.get(id));photoURLs.delete(id);}}
+window.addEventListener("pagehide",event=>{if(!event.persisted){for(const id of photoURLs.keys())releasePhotoURL(id);}});
+function downloadBlob(blob,name){
+ if(!blob)throw Error('無法產生圖片，請重試。');
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;
+ try{a.click();}finally{setTimeout(()=>URL.revokeObjectURL(url),1000);}
+}
+async function putPhoto(id, blob){ releasePhotoURL(id); const db=await openDB(); await new Promise((res,rej)=>{ const tx=db.transaction("p","readwrite"); tx.objectStore("p").put(blob,id); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+async function getPhotoURL(id){
+ if(photoURLs.has(id))return photoURLs.get(id);
+ const blob=await getPhotoBlob(id);if(!blob)return '';
+ if(!photoURLs.has(id))photoURLs.set(id,URL.createObjectURL(blob));
+ return photoURLs.get(id);
+}
+async function delPhoto(id){ releasePhotoURL(id); const db=await openDB(); await new Promise((res,rej)=>{ const tx=db.transaction("p","readwrite"); tx.objectStore("p").delete(id); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
 
 function show(name){
   state.view = name;
@@ -688,7 +697,7 @@ function compressImage(file, max=1200, q=0.72){
       c.getContext("2d").drawImage(img,0,0,c.width,c.height);
       c.toBlob(b => { URL.revokeObjectURL(url); b?resolve(b):reject(); }, "image/jpeg", q);
     };
-    img.onerror = reject; img.src = url;
+    img.onerror = error=>{URL.revokeObjectURL(url);reject(error);}; img.src = url;
   });
 }
 
@@ -1219,10 +1228,7 @@ async function shareCard(r){
   shutter();
   await new Promise((res,rej)=>c.toBlob(b=>{
     if(!b) return rej();
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(b);
-    a.download = (r.name || "recipe") + ".jpg";
-    a.click();
+    downloadBlob(b,(r.name || "recipe")+".jpg");
     res();
   }, "image/jpeg", 0.92));
   toast("已下載分享圖");
@@ -1233,10 +1239,7 @@ function exportSettings(){
     app: "富士食譜工具", version: 1, exportedAt: new Date().toISOString(),
     recipes: state.recipes.map(r => ({...r, photos: []}))
   }, null, 2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `fuji-recipes-${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
+  downloadBlob(blob,`fuji-recipes-${new Date().toISOString().slice(0,10)}.json`);
   toast("已匯出設定（不含照片）");
 }
 async function importSettings(file){
@@ -1271,13 +1274,13 @@ async function clearAppCache(){
     // 1. 清除 Service Worker 快取 (Cache Storage)
     if ('caches' in window) {
       const keys = await caches.keys();
-      await Promise.all(keys.map(key => caches.delete(key)));
+      await Promise.all(keys.filter(key=>/^fuji-recipe-v\d+$/.test(key)).map(key => caches.delete(key)));
     }
     // 2. 註銷 Service Worker 註冊
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       for (const reg of registrations) {
-        await reg.unregister();
+        if(reg.scope===new URL("./",location.href).href&&[reg.active,reg.waiting,reg.installing].some(worker=>worker?.scriptURL===new URL("sw.js",location.href).href))await reg.unregister();
       }
     }
     toast("快取已清除，正在重新載入…");
